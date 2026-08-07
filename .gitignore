@@ -1,0 +1,82 @@
+﻿# ==========================
+# Dependencies
+# ==========================
+node_modules/
+**/node_modules/
+
+# ==========================
+# Build Output
+# ==========================
+dist/
+build/
+coverage/
+**/dist/
+**/build/
+
+# ==========================
+# Environment Files
+# ==========================
+.env
+.env.*
+!.env.example
+**/.env
+
+# ==========================
+# Uploads (Runtime Files)
+# ==========================
+uploads/
+**/uploads/
+**/uploads/avatars/
+**/uploads/proofs/
+**/uploads/bulk/
+
+# ==========================
+# Deployment
+# ==========================
+.vercel/
+.vscode/
+
+# ==========================
+# Logs
+# ==========================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ==========================
+# OS Files
+# ==========================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ==========================
+# IDE
+# ==========================
+.idea/
+*.swp
+*.swo
+
+# ==========================
+# Cache
+# ==========================
+.cache/
+.eslintcache
+
+# ==========================
+# Archives
+# ==========================
+*.zip
+*.tar
+*.gz
+*.rar
+*.7z
+
+# ==========================
+# Temp Files
+# ==========================
+tmp/
+temp/

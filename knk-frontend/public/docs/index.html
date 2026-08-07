@@ -1,0 +1,2074 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>KNK Partners — API Reference</title>
+<meta name="description" content="KNK Partners API Reference — Enterprise Background Verification and Case Management Platform" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+/* ── Reset & Base ─────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #0d1117; color: #e6edf3;
+  -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+}
+code, pre, .mono { font-family: 'JetBrains Mono', 'Fira Code', Consolas, monospace; }
+
+/* ── Scrollbar ─────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #30363d; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #484f58; }
+
+/* ── Layout ────────────────────────────────────────────── */
+.topbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  height: 56px; background: rgba(13,17,23,0.97); backdrop-filter: blur(8px);
+  border-bottom: 1px solid #21262d;
+  display: flex; align-items: center; padding: 0 20px; gap: 12px;
+}
+.layout { display: flex; padding-top: 56px; min-height: 100vh; }
+.sidebar {
+  position: fixed; top: 56px; left: 0; bottom: 0; width: 260px;
+  background: #0d1117; border-right: 1px solid #21262d;
+  overflow-y: auto; z-index: 90; padding: 12px;
+  scrollbar-width: thin; scrollbar-color: #30363d transparent;
+}
+.main-content { margin-left: 260px; flex: 1; padding: 40px 60px 80px; max-width: 960px; }
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); transition: transform .25s; }
+  .sidebar.open { transform: translateX(0); }
+  .main-content { margin-left: 0; padding: 24px 20px 60px; }
+  .mobile-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 80; }
+  .mobile-overlay.show { display: block; }
+  .hamburger { display: flex !important; }
+}
+
+/* ── Topbar ─────────────────────────────────────────────── */
+.logo-wrap { display: flex; align-items: center; gap: 10px; }
+.logo-icon {
+  width: 28px; height: 28px; border-radius: 8px;
+  background: linear-gradient(135deg, #1f6feb, #388bfd);
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 900; color: white; font-size: 13px; letter-spacing: -0.5px;
+}
+.logo-name { font-weight: 700; font-size: 14px; color: #e6edf3; }
+.logo-slash { color: #30363d; font-size: 14px; margin: 0 2px; }
+.logo-sub { color: #7d8590; font-size: 14px; }
+.version-badge {
+  padding: 2px 8px; border-radius: 99px; font-size: 11px; font-weight: 700;
+  background: rgba(31,111,235,0.15); color: #58a6ff; border: 1px solid rgba(31,111,235,0.3);
+}
+.topbar-right { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.search-box {
+  display: flex; align-items: center; gap: 8px;
+  background: #161b22; border: 1px solid #21262d; border-radius: 8px;
+  padding: 6px 12px; font-size: 13px; color: #7d8590; width: 220px; cursor: pointer;
+}
+.search-box kbd { font-size: 10px; background: #21262d; border-radius: 4px; padding: 1px 5px; margin-left: auto; }
+.btn-primary {
+  padding: 6px 14px; border-radius: 8px; background: #238636;
+  color: white; font-size: 13px; font-weight: 500; text-decoration: none;
+  border: none; cursor: pointer; transition: background .15s;
+  white-space: nowrap;
+}
+.btn-primary:hover { background: #2ea043; }
+.hamburger {
+  display: none; padding: 6px; border-radius: 6px; background: transparent;
+  border: none; color: #7d8590; cursor: pointer; align-items: center;
+}
+.hamburger:hover { color: #e6edf3; background: #21262d; }
+
+/* ── Sidebar Nav ────────────────────────────────────────── */
+.sidebar-search {
+  display: flex; align-items: center; gap: 8px;
+  background: #161b22; border: 1px solid #21262d; border-radius: 8px;
+  padding: 7px 10px; margin-bottom: 12px;
+}
+.sidebar-search input {
+  background: transparent; border: none; outline: none; color: #c9d1d9;
+  font-size: 13px; font-family: inherit; width: 100%;
+}
+.sidebar-search input::placeholder { color: #484f58; }
+.nav-group { margin-bottom: 2px; }
+.nav-item {
+  display: flex; align-items: center; gap: 8px; padding: 7px 10px;
+  border-radius: 8px; font-size: 13px; cursor: pointer; border: none;
+  background: transparent; color: #8b949e; text-align: left; width: 100%;
+  transition: all .15s; text-decoration: none;
+}
+.nav-item:hover { color: #c9d1d9; background: #161b22; }
+.nav-item.active { background: rgba(31,111,235,0.12); color: #58a6ff; font-weight: 500; }
+.nav-item .icon { font-size: 15px; flex-shrink: 0; }
+.nav-item .chevron { margin-left: auto; transition: transform .2s; font-size: 10px; opacity: .6; }
+.nav-item.open .chevron { transform: rotate(90deg); }
+.nav-children { border-left: 1px solid #21262d; margin-left: 22px; padding-left: 0; }
+.nav-child {
+  display: flex; align-items: center; gap:6px; padding: 6px 10px;
+  border-radius: 6px; font-size: 12.5px; cursor: pointer;
+  color: #7d8590; text-align: left; width: 100%; background: transparent; border: none;
+  transition: all .15s; gap: 8px;
+}
+.nav-child::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #30363d; flex-shrink: 0; }
+.nav-child:hover { color: #c9d1d9; }
+.nav-child.active { color: #58a6ff; font-weight: 500; }
+.nav-child.active::before { background: #58a6ff; }
+.base-url-box { margin-top: 16px; padding-top: 14px; border-top: 1px solid #21262d; }
+.base-url-label { font-size: 10px; color: #7d8590; text-transform: uppercase; letter-spacing: .08em; font-weight: 600; margin-bottom: 6px; }
+.base-url-code { background: #161b22; border-radius: 6px; padding: 8px 10px; font-size: 11px; color: #58a6ff; word-break: break-all; font-family: 'JetBrains Mono', monospace; }
+
+/* ── Content Sections ───────────────────────────────────── */
+.section { margin-bottom: 60px; scroll-margin-top: 80px; }
+.section-header { margin-bottom: 28px; }
+.section-title { font-size: 28px; font-weight: 900; color: #e6edf3; letter-spacing: -0.5px; margin-bottom: 8px; }
+.section-sub { font-size: 16px; color: #8b949e; line-height: 1.7; max-width: 640px; }
+.divider { border: none; border-top: 1px solid #21262d; margin: 48px 0 0; }
+
+/* ── Endpoint ────────────────────────────────────────────── */
+.endpoint-section { margin-bottom: 56px; scroll-margin-top: 80px; }
+.endpoint-header { display: flex; flex-wrap: wrap; align-items: flex-start; gap: 12px; margin-bottom: 14px; }
+.endpoint-title { font-size: 22px; font-weight: 800; color: #e6edf3; letter-spacing: -0.3px; margin-top: 4px; }
+.endpoint-url {
+  display: flex; align-items: center; gap: 10px;
+  background: #161b22; border: 1px solid #21262d; border-radius: 10px;
+  padding: 12px 16px; font-family: 'JetBrains Mono', monospace; font-size: 13px;
+  overflow-x: auto; margin-bottom: 16px; white-space: nowrap;
+}
+.url-base { color: #58a6ff; }
+.url-path { color: #e6edf3; }
+.endpoint-desc { color: #8b949e; line-height: 1.75; margin-bottom: 20px; font-size: 14.5px; }
+
+/* ── Badges ─────────────────────────────────────────────── */
+.badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 700;
+  font-family: 'JetBrains Mono', monospace; border: 1px solid; letter-spacing: .02em;
+}
+.badge-GET { background: rgba(63,185,80,.12); color: #3fb950; border-color: rgba(63,185,80,.3); }
+.badge-POST { background: rgba(88,166,255,.12); color: #58a6ff; border-color: rgba(88,166,255,.3); }
+.badge-PUT { background: rgba(210,153,34,.12); color: #d2a61a; border-color: rgba(210,153,34,.3); }
+.badge-PATCH { background: rgba(188,140,255,.12); color: #bc8cff; border-color: rgba(188,140,255,.3); }
+.badge-DELETE { background: rgba(248,81,73,.12); color: #f85149; border-color: rgba(248,81,73,.3); }
+.badge-jwt { background: rgba(56,210,220,.1); color: #39d0d9; border-color: rgba(56,210,220,.2); font-family: inherit; font-weight: 500; font-size: 12px; border-radius: 99px; }
+.badge-apikey { background: rgba(240,136,62,.1); color: #f0883e; border-color: rgba(240,136,62,.2); font-family: inherit; font-weight: 500; font-size: 12px; border-radius: 99px; }
+.badge-status {
+  display: inline-block; padding: 2px 8px; border-radius: 4px;
+  font-size: 11px; font-weight: 700; font-family: 'JetBrains Mono', monospace;
+}
+.badge-200 { background: rgba(63,185,80,.15); color: #3fb950; }
+.badge-4xx { background: rgba(210,153,34,.15); color: #d2a61a; }
+.badge-5xx { background: rgba(248,81,73,.15); color: #f85149; }
+.badge-error { background: rgba(248,81,73,.1); color: #f85149; border: 1px solid rgba(248,81,73,.2); font-size: 10px; padding: 2px 6px; border-radius: 4px; }
+.badge-required { background: rgba(248,81,73,.1); color: #f85149; border: 1px solid rgba(248,81,73,.2); font-size: 10px; padding: 2px 6px; border-radius: 4px; font-family: inherit; }
+.badge-optional { background: #21262d; color: #7d8590; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-family: inherit; }
+.status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+.pulse { animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.4; } }
+
+/* ── Callout ────────────────────────────────────────────── */
+.callout {
+  border-radius: 10px; padding: 14px 16px; margin-bottom: 18px;
+  font-size: 13.5px; line-height: 1.7; display: flex; gap: 10px;
+}
+.callout-icon { flex-shrink: 0; margin-top: 1px; }
+.callout-info { background: #0d2137; border: 1px solid rgba(31,111,235,.35); color: #79c0ff; }
+.callout-warning { background: #2d1f00; border: 1px solid rgba(240,136,62,.35); color: #f0883e; }
+.callout-success { background: #0a2e1e; border: 1px solid rgba(63,185,80,.35); color: #56d364; }
+.callout-danger { background: #2d0a0a; border: 1px solid rgba(248,81,73,.35); color: #f85149; }
+
+/* ── Code Block ─────────────────────────────────────────── */
+.code-block { margin-bottom: 18px; border-radius: 10px; overflow: hidden; border: 1px solid #21262d; }
+.code-header {
+  display: flex; align-items: center; justify-content: space-between;
+  background: #161b22; padding: 8px 14px; border-bottom: 1px solid #21262d;
+}
+.code-lang { font-size: 10px; color: #7d8590; text-transform: uppercase; letter-spacing: .1em; font-weight: 600; }
+.copy-btn {
+  display: flex; align-items: center; gap: 5px; font-size: 11px; font-weight: 500;
+  color: #7d8590; background: transparent; border: none; cursor: pointer;
+  padding: 4px 8px; border-radius: 5px; transition: all .15s;
+}
+.copy-btn:hover { color: #e6edf3; background: #21262d; }
+.copy-btn.copied { color: #3fb950; }
+.code-pre {
+  background: #0d1117; padding: 16px; overflow-x: auto; margin: 0;
+  font-family: 'JetBrains Mono', monospace; font-size: 12.5px;
+  line-height: 1.75; color: #e6edf3;
+}
+
+/* ── Tabs ───────────────────────────────────────────────── */
+.tabs { border: 1px solid #21262d; border-radius: 10px; overflow: hidden; margin-bottom: 18px; }
+.tab-bar { display: flex; background: #161b22; border-bottom: 1px solid #21262d; }
+.tab-btn {
+  padding: 9px 16px; font-size: 13px; font-weight: 500; color: #7d8590;
+  background: transparent; border: none; cursor: pointer; transition: all .15s;
+  position: relative; border-right: 1px solid #21262d;
+}
+.tab-btn:last-child { border-right: none; }
+.tab-btn:hover { color: #c9d1d9; }
+.tab-btn.active { color: #e6edf3; background: #0d1117; }
+.tab-btn.active::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 2px; background: #1f6feb; }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+.tab-pane pre { background: #0d1117; padding: 16px; margin: 0; font-family: 'JetBrains Mono', monospace; font-size: 12.5px; line-height: 1.75; color: #e6edf3; overflow-x: auto; }
+
+/* ── Table ───────────────────────────────────────────────── */
+.param-table { margin-bottom: 20px; }
+.param-table-label { font-size: 11px; color: #7d8590; text-transform: uppercase; letter-spacing: .1em; font-weight: 700; margin-bottom: 10px; }
+.table-wrap { border: 1px solid #21262d; border-radius: 10px; overflow: hidden; }
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+thead { background: #161b22; }
+th { text-align: left; padding: 9px 14px; color: #7d8590; font-weight: 600; font-size: 12px; border-bottom: 1px solid #21262d; }
+td { padding: 10px 14px; color: #8b949e; border-bottom: 1px solid #1a1f26; vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+.td-key { font-family: 'JetBrains Mono', monospace; color: #79c0ff; font-size: 12px; }
+.td-type { font-family: 'JetBrains Mono', monospace; color: #a5d6ff; font-size: 12px; }
+.td-val { font-family: 'JetBrains Mono', monospace; color: #a5d6ff; font-size: 12px; }
+.td-desc { font-size: 12.5px; color: #8b949e; line-height: 1.6; }
+
+/* ── Response Grid ──────────────────────────────────────── */
+.response-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 18px; }
+@media (max-width: 720px) { .response-grid { grid-template-columns: 1fr; } }
+.response-label { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; font-size: 12px; color: #7d8590; }
+.error-list { border: 1px solid #21262d; border-radius: 8px; overflow: hidden; }
+.error-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 14px; border-bottom: 1px solid #1a1f26; background: #0d1117; }
+.error-item:last-child { border-bottom: none; }
+.error-code-cell { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 4px; background: rgba(248,81,73,.1); color: #f85149; border: 1px solid rgba(248,81,73,.2); flex-shrink: 0; margin-top: 1px; }
+.error-msg { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #f85149; }
+
+/* ── Cards / Feature Grid ───────────────────────────────── */
+.feature-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 24px; }
+@media (max-width: 620px) { .feature-grid { grid-template-columns: 1fr; } }
+.feature-card {
+  background: #161b22; border: 1px solid #21262d; border-radius: 12px;
+  padding: 18px; transition: border-color .2s;
+}
+.feature-card:hover { border-color: rgba(31,111,235,.4); }
+.feature-icon { font-size: 22px; margin-bottom: 8px; }
+.feature-title { font-weight: 600; color: #e6edf3; font-size: 13.5px; margin-bottom: 4px; }
+.feature-desc { font-size: 12px; color: #7d8590; line-height: 1.6; }
+
+/* ── Status Pills ───────────────────────────────────────── */
+.status-pills { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.status-pill {
+  display: flex; align-items: center; gap: 8px;
+  background: #161b22; border: 1px solid #21262d; border-radius: 8px;
+  padding: 6px 12px;
+}
+.status-pill-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.status-pill-name { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: #e6edf3; }
+.status-pill-desc { font-size: 11px; color: #7d8590; }
+
+/* ── Info Box ────────────────────────────────────────────── */
+.info-box { background: #161b22; border: 1px solid #21262d; border-radius: 12px; padding: 18px 20px; margin: 16px 0; }
+.info-box-title { font-size: 13px; font-weight: 700; color: #e6edf3; margin-bottom: 12px; }
+.info-list { list-style: none; }
+.info-list li { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: #8b949e; padding: 4px 0; }
+.info-list li .bullet { color: #58a6ff; flex-shrink: 0; }
+.info-list li .bullet-green { color: #3fb950; }
+
+/* ── Step List ───────────────────────────────────────────── */
+.step-list { list-style: none; }
+.step-item { display: flex; gap: 16px; margin-bottom: 20px; }
+.step-num {
+  flex-shrink: 0; width: 36px; height: 36px; border-radius: 10px;
+  background: rgba(31,111,235,.15); border: 1px solid rgba(31,111,235,.3);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 900; color: #58a6ff;
+}
+.step-body h4 { font-size: 14px; font-weight: 700; color: #e6edf3; margin-bottom: 4px; margin-top: 8px; }
+.step-body p { font-size: 13.5px; color: #8b949e; line-height: 1.7; }
+
+/* ── Status Table Colors ─────────────────────────────────── */
+.c-slate { background: #64748b; }
+.c-blue { background: #3b82f6; }
+.c-purple { background: #8b5cf6; }
+.c-green { background: #22c55e; }
+.c-orange { background: #f97316; }
+.c-yellow { background: #eab308; }
+.c-gray { background: #6b7280; }
+.c-red { background: #ef4444; }
+
+/* ── Changelog ──────────────────────────────────────────── */
+.release-card { background: #161b22; border: 1px solid #21262d; border-radius: 12px; overflow: hidden; margin-bottom: 16px; }
+.release-header { display: flex; align-items: center; gap: 10px; padding: 14px 20px; border-bottom: 1px solid #21262d; }
+.release-version { font-size: 17px; font-weight: 900; color: #e6edf3; }
+.release-badge { font-size: 11px; padding: 2px 8px; border-radius: 99px; font-weight: 700; }
+.rb-major { background: rgba(31,111,235,.15); color: #58a6ff; border: 1px solid rgba(31,111,235,.3); }
+.release-date { margin-left: auto; font-size: 12px; color: #7d8590; }
+.release-body { padding: 16px 20px; }
+.release-body li { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; color: #8b949e; padding: 3px 0; }
+.release-body li::before { content: '+'; color: #3fb950; font-weight: 700; flex-shrink: 0; }
+
+/* ── Client Card ─────────────────────────────────────────── */
+.client-card { background: #161b22; border: 1px solid #21262d; border-radius: 12px; padding: 22px; }
+.client-card-inner { display: flex; gap: 16px; }
+.client-icon { flex-shrink: 0; width: 48px; height: 48px; border-radius: 12px; background: rgba(255,108,55,.1); border: 1px solid rgba(255,108,55,.25); display: flex; align-items: center; justify-content: center; font-size: 22px; }
+.client-actions { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.btn-outline { padding: 7px 14px; border-radius: 8px; border: 1px solid #21262d; color: #c9d1d9; font-size: 13px; font-weight: 500; text-decoration: none; background: transparent; cursor: pointer; transition: border-color .15s; display: inline-flex; align-items: center; }
+.btn-outline:hover { border-color: #484f58; }
+.btn-postman { background: #FF6C37; color: white; border: none; padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; transition: opacity .15s; text-decoration: none; display: inline-flex; align-items: center; }
+.btn-postman:hover { opacity: .88; }
+
+/* ── Intro Banner ────────────────────────────────────────── */
+.intro-banner {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 5px 12px; border-radius: 99px;
+  background: rgba(31,111,235,.08); border: 1px solid rgba(31,111,235,.2);
+  color: #58a6ff; font-size: 12px; font-weight: 500; margin-bottom: 16px;
+}
+.intro-title { font-size: 38px; font-weight: 900; color: #e6edf3; letter-spacing: -1px; margin-bottom: 12px; line-height: 1.1; }
+.intro-desc { font-size: 16px; color: #8b949e; line-height: 1.7; max-width: 580px; margin-bottom: 28px; }
+.base-url-row {
+  display: flex; align-items: center; gap: 10px;
+  background: #161b22; border: 1px solid #21262d; border-radius: 10px;
+  padding: 12px 16px; font-family: 'JetBrains Mono', monospace; font-size: 13px;
+  margin-bottom: 8px;
+}
+.base-url-https { color: #3fb950; }
+.base-url-host { color: #58a6ff; }
+.base-url-path { color: #e6edf3; }
+
+/* ── Footer ─────────────────────────────────────────────── */
+footer { border-top: 1px solid #21262d; padding: 32px 0; text-align: center; color: #7d8590; font-size: 13px; }
+footer .ft-brand { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 8px; }
+footer a { color: #58a6ff; text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+
+/* ── Util ────────────────────────────────────────────────── */
+.flex { display: flex; }
+.flex-wrap { flex-wrap: wrap; }
+.items-center { align-items: center; }
+.items-start { align-items: flex-start; }
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 12px; }
+.mb-0 { margin-bottom: 0 !important; }
+.mb-2 { margin-bottom: 8px; }
+.mb-4 { margin-bottom: 16px; }
+.mb-6 { margin-bottom: 24px; }
+.mt-4 { margin-top: 16px; }
+.mt-6 { margin-top: 24px; }
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<header class="topbar">
+  <button class="hamburger" id="hamburger" onclick="toggleMobile()" aria-label="Menu">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+  </button>
+  <div class="logo-wrap">
+    <div class="logo-icon">K</div>
+    <span class="logo-name">KNK Partners</span>
+    <span class="logo-slash">/</span>
+    <span class="logo-sub" style="display:none" id="logo-sub-desktop">API Reference</span>
+  </div>
+  <span class="version-badge">v1.0</span>
+  <div class="topbar-right">
+    <div class="search-box" onclick="focusSearch()" style="display:none" id="topbar-search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      Search docs
+      <kbd>⌘K</kbd>
+    </div>
+    <a href="https://example.com" target="_blank" class="btn-primary">Sign In To Dashboard → </a>
+  </div>
+</header>
+
+<div id="mobile-overlay" class="mobile-overlay" onclick="toggleMobile()"></div>
+
+<div class="layout">
+
+<!-- SIDEBAR -->
+<nav class="sidebar" id="sidebar">
+  <div class="sidebar-search">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:#484f58;flex-shrink:0"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    <input type="text" placeholder="Filter..." id="sidebar-search-input" oninput="filterNav(this.value)" />
+  </div>
+  <div id="nav-tree"></div>
+  <div class="base-url-box">
+    <div class="base-url-label">Base URL</div>
+    <div class="base-url-code">api.example.com/api/v1</div>
+  </div>
+</nav>
+
+<!-- MAIN CONTENT -->
+<main class="main-content">
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- INTRODUCTION                                           -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="introduction">
+  <div class="intro-banner">
+    <span class="status-dot" style="background:#3fb950" class="pulse"></span>
+    Production API &nbsp;·&nbsp; v1.0 &nbsp;·&nbsp; REST / HTTPS / JSON
+  </div>
+  <h1 class="intro-title">KNK Partners API</h1>
+
+  <div class="callout callout-warning" style="margin-top:20px;">
+    <span class="callout-icon">🔒</span>
+      <span>
+          This documentation is intended for authorized KNK Partners clients and integration partners.
+          API credentials are issued individually. Unauthorized use or distribution of this documentation
+          or API credentials is prohibited.
+      </span>
+  </div>
+  <p class="intro-desc">
+    Enterprise-grade Background Verification and Case Management Platform API.
+    Build integrations, automate verification workflows, and receive real-time
+    status updates for your entire candidate pipeline.
+  </p>
+
+  <div class="feature-grid">
+    <div class="feature-card">
+      <div class="feature-icon">⚡</div>
+      <div class="feature-title">REST API</div>
+      <div class="feature-desc">Standard HTTP/JSON interface with predictable resource-oriented endpoints</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔔</div>
+      <div class="feature-title">Webhooks</div>
+      <div class="feature-desc">Real-time POST callbacks on every case status transition</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔑</div>
+      <div class="feature-title">API Keys</div>
+      <div class="feature-desc">Vendor-scoped keys with automatic access isolation</div>
+    </div>
+  </div>
+
+  <div class="base-url-row">
+    <span class="base-url-https">HTTPS</span>
+    <span style="color:#30363d">//</span>
+    <span class="base-url-host">api.example.com</span>
+    <span class="base-url-path">/api/v1</span>
+    <button class="copy-btn" style="margin-left:auto" onclick="copyText('https://api.example.com/api/v1', this)">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      Copy
+    </button>
+  </div>
+
+  <div class="callout callout-info">
+    <span class="callout-icon">ℹ️</span>
+    <span>All API requests must be made over <strong>HTTPS</strong>. HTTP requests will be rejected. All request and response bodies are encoded as <strong>JSON</strong>.</span>
+  </div>
+  <hr class="divider"/>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- QUICK START                                            -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="quickstart">
+  <div class="section-header">
+    <h1 class="section-title">Quick Start</h1>
+    <p class="section-sub">Get your first API call working in under 5 minutes.</p>
+  </div>
+
+  <ol class="step-list">
+    <li class="step-item">
+      <div class="step-num">01</div>
+      <div class="step-body">
+        <h4>Obtain your credentials</h4>
+        <p>Contact your KNK Partners account manager to receive JWT credentials (for admin/agent login) or an API key (for vendor system integrations). Never expose credentials in client-side code.</p>
+      </div>
+    </li>
+    <li class="step-item">
+      <div class="step-num">02</div>
+      <div class="step-body">
+        <h4>Authenticate</h4>
+        <p>Call <code style="color:#79c0ff;background:#161b22;padding:2px 6px;border-radius:4px;font-family:monospace">POST /auth/login</code> to receive a JWT token (internal users), or use your pre-issued API key in the <code style="color:#79c0ff;background:#161b22;padding:2px 6px;border-radius:4px;font-family:monospace">x-api-key</code> header (vendor integrations).</p>
+      </div>
+    </li>
+    <li class="step-item">
+      <div class="step-num">03</div>
+      <div class="step-body">
+        <h4>Create your first case</h4>
+        <p>Submit a <code style="color:#58a6ff;background:#161b22;padding:2px 6px;border-radius:4px;font-family:monospace">POST /cases</code> request with the candidate's details. You'll receive a case object with status <code style="color:#3fb950;background:#161b22;padding:2px 6px;border-radius:4px;font-family:monospace">NEW</code>.</p>
+      </div>
+    </li>
+    <li class="step-item">
+      <div class="step-num">04</div>
+      <div class="step-body">
+        <h4>Track status in real time</h4>
+        <p>Poll <code style="color:#79c0ff;background:#161b22;padding:2px 6px;border-radius:4px;font-family:monospace">GET /cases/:id</code> or configure a <code style="color:#79c0ff;background:#161b22;padding:2px 6px;border-radius:4px;font-family:monospace">callback_url</code> webhook to receive automatic POST notifications on every status change.</p>
+      </div>
+    </li>
+  </ol>
+  <hr class="divider"/>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- AUTHENTICATION                                         -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="authentication">
+  <div class="section-header">
+    <h1 class="section-title">Authentication</h1>
+    <p class="section-sub">KNK Partners API supports two authentication schemes depending on your integration type.</p>
+  </div>
+
+  <div class="section" id="jwt-auth" style="margin-bottom:36px">
+    <h2 style="font-size:20px;font-weight:800;color:#e6edf3;margin-bottom:12px">JWT Authentication</h2>
+    <p style="color:#8b949e;margin-bottom:14px;font-size:14px;line-height:1.75">Used by internal platform users (admins and agents). Authenticate via the login endpoint to receive a short-lived JWT token. Pass it as a <strong>Bearer token</strong> in the Authorization header on every subsequent request.</p>
+    <div class="callout callout-warning">
+      <span class="callout-icon">⚠️</span>
+      <span>JWT tokens expire after <strong>24 hours</strong>. Re-authenticate when you receive a <code>401 Unauthorized</code> response.</span>
+    </div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+      <pre class="code-pre"># Step 1: Login to get JWT token
+curl -X POST https://api.example.com/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@example.com", "password": "YourPasswordHere"}'
+
+# Step 2: Use token in all requests
+curl https://api.example.com/api/v1/cases \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN..."</pre>
+    </div>
+  </div>
+
+  <div class="section" id="apikey-auth" style="margin-bottom:0">
+    <h2 style="font-size:20px;font-weight:800;color:#e6edf3;margin-bottom:12px">API Key Authentication</h2>
+    <p style="color:#8b949e;margin-bottom:14px;font-size:14px;line-height:1.75">Used by external vendor systems integrating via Client Integration APIs. Your API key is scoped to your vendor account — you only access cases belonging to your organization. Pass it in the <code style="color:#79c0ff;background:#161b22;padding:2px 6px;border-radius:4px;font-family:monospace">x-api-key</code> request header.</p>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+      <pre class="code-pre">curl https://api.example.com/api/v1/client/status/REF-2026-001234 \
+  -H "x-api-key: YOUR_API_KEY_HERE"</pre>
+    </div>
+    <div class="callout callout-info">
+      <span class="callout-icon">ℹ️</span>
+      <span>If your API key is compromised, an admin can regenerate it immediately via the Vendor Management API. The old key is invalidated instantly.</span>
+    </div>
+  </div>
+  <hr class="divider"/>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- RATE LIMITING                                          -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="rate-limiting">
+  <div class="section-header">
+    <h1 class="section-title">Rate Limiting</h1>
+    <p class="section-sub">API requests are rate limited per authentication identity to ensure platform stability.</p>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px">
+    <div class="feature-card">
+      <div class="feature-icon" style="font-size:14px;font-weight:700;color:#58a6ff;font-family:monospace">JWT</div>
+      <div class="feature-title" style="font-size:24px;font-weight:900;color:#e6edf3;margin-top:8px">1,000</div>
+      <div class="feature-desc">Requests per minute · Burst: 100/s</div>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon" style="font-size:14px;font-weight:700;color:#f0883e;font-family:monospace">API Key</div>
+      <div class="feature-title" style="font-size:24px;font-weight:900;color:#e6edf3;margin-top:8px">200</div>
+      <div class="feature-desc">Requests per minute · Burst: 20/s</div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">http response headers</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+    <pre class="code-pre">X-RateLimit-Limit: 1000
+X-RateLimit-Remaining: 847
+X-RateLimit-Reset: 1719139860
+Retry-After: 30   # Only present when rate limited (429)</pre>
+  </div>
+  <hr class="divider"/>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- ERROR HANDLING                                         -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="errors">
+  <div class="section-header">
+    <h1 class="section-title">Error Handling</h1>
+    <p class="section-sub">All errors follow a consistent JSON structure. Check the <code style="color:#79c0ff;background:#161b22;padding:2px 6px;border-radius:4px;font-family:monospace">success</code> field and HTTP status to determine error type.</p>
+  </div>
+
+  <div class="table-wrap" style="margin-bottom:20px">
+    <table>
+      <thead><tr><th>HTTP Status</th><th>Meaning</th><th>Common Cause</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge-status badge-200">200</span></td><td style="color:#e6edf3;font-weight:500">OK</td><td class="td-desc">Request succeeded</td></tr>
+        <tr><td><span class="badge-status badge-200">201</span></td><td style="color:#e6edf3;font-weight:500">Created</td><td class="td-desc">Resource created successfully</td></tr>
+        <tr><td><span class="badge-status badge-4xx">400</span></td><td style="color:#e6edf3;font-weight:500">Bad Request</td><td class="td-desc">Invalid request body or missing required fields</td></tr>
+        <tr><td><span class="badge-status badge-4xx">401</span></td><td style="color:#e6edf3;font-weight:500">Unauthorized</td><td class="td-desc">Missing, expired, or malformed token</td></tr>
+        <tr><td><span class="badge-status badge-4xx">403</span></td><td style="color:#e6edf3;font-weight:500">Forbidden</td><td class="td-desc">Valid credentials but insufficient permissions (e.g. agent trying admin action)</td></tr>
+        <tr><td><span class="badge-status badge-4xx">404</span></td><td style="color:#e6edf3;font-weight:500">Not Found</td><td class="td-desc">Resource does not exist or is not accessible to caller</td></tr>
+        <tr><td><span class="badge-status badge-4xx">409</span></td><td style="color:#e6edf3;font-weight:500">Conflict</td><td class="td-desc">Duplicate unique field (e.g. comp_ref_no already exists)</td></tr>
+        <tr><td><span class="badge-status badge-4xx">422</span></td><td style="color:#e6edf3;font-weight:500">Unprocessable</td><td class="td-desc">Validation failed — check field formats and enum values</td></tr>
+        <tr><td><span class="badge-status badge-4xx">429</span></td><td style="color:#e6edf3;font-weight:500">Too Many Requests</td><td class="td-desc">Rate limit exceeded — see Retry-After header</td></tr>
+        <tr><td><span class="badge-status badge-5xx">500</span></td><td style="color:#e6edf3;font-weight:500">Server Error</td><td class="td-desc">Internal error — contact support with request ID</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="param-table-label">Error Response Shape</div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">json</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+    <pre class="code-pre">{
+  "success": false,
+  "message": "Case not found",
+  "errorCode": "RESOURCE_NOT_FOUND",
+  "statusCode": 404,
+  "timestamp": "2026-06-23T10:00:00.000Z"
+}</pre>
+  </div>
+  <hr class="divider"/>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- CASE APIs                                              -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="cases">
+  <div class="section-header">
+    <h1 class="section-title">Case APIs</h1>
+    <p class="section-sub">Core CRUD and workflow operations for background verification cases. All endpoints require JWT authentication.</p>
+  </div>
+
+  <div style="background:#161b22;border:1px solid #21262d;border-radius:12px;padding:18px;margin-bottom:20px">
+    <div style="font-size:11px;color:#7d8590;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:12px">Case Status Workflow</div>
+    <div class="status-pills">
+      <div class="status-pill"><span class="status-pill-dot c-slate"></span><span class="status-pill-name">NEW</span><span class="status-pill-desc" style="margin-left:4px">· Received, pending assignment</span></div>
+      <div class="status-pill"><span class="status-pill-dot c-blue"></span><span class="status-pill-name">IN_PROGRESS</span><span class="status-pill-desc" style="margin-left:4px">· Active verification</span></div>
+      <div class="status-pill"><span class="status-pill-dot c-purple"></span><span class="status-pill-name">Q_CHECK</span><span class="status-pill-desc" style="margin-left:4px">· Quality review</span></div>
+      <div class="status-pill"><span class="status-pill-dot c-green"></span><span class="status-pill-name">DONE</span><span class="status-pill-desc" style="margin-left:4px">· Complete</span></div>
+      <div class="status-pill"><span class="status-pill-dot c-orange"></span><span class="status-pill-name">INSUFFICIENT</span><span class="status-pill-desc" style="margin-left:4px">· Query raised</span></div>
+      <div class="status-pill"><span class="status-pill-dot c-yellow"></span><span class="status-pill-name">ON_HOLD</span></div>
+      <div class="status-pill"><span class="status-pill-dot c-gray"></span><span class="status-pill-name">STOPPED</span></div>
+      <div class="status-pill"><span class="status-pill-dot c-red"></span><span class="status-pill-name">REJECTED</span></div>
+    </div>
+    <div style="font-size:11px;color:#7d8590;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-top:16px;margin-bottom:12px">Verification Results</div>
+    <div class="status-pills">
+      <div class="status-pill"><span class="status-pill-dot c-green"></span><span class="status-pill-name">GREEN</span><span class="status-pill-desc" style="margin-left:4px">· All clear</span></div>
+      <div class="status-pill"><span class="status-pill-dot c-red"></span><span class="status-pill-name">RED</span><span class="status-pill-desc" style="margin-left:4px">· Major discrepancy</span></div>
+      <div class="status-pill"><span class="status-pill-dot c-orange"></span><span class="status-pill-name">ORANGE</span><span class="status-pill-desc" style="margin-left:4px">· Minor issues</span></div>
+      <div class="status-pill"><span class="status-pill-dot c-gray"></span><span class="status-pill-name">INSUFFICIENT</span><span class="status-pill-desc" style="margin-left:4px">· Incomplete data</span></div>
+    </div>
+  </div>
+  <hr class="divider" style="margin-bottom:40px"/>
+</section>
+
+<!-- CREATE CASE -->
+<div class="endpoint-section" id="create-case">
+  <div class="flex flex-wrap items-center gap-2" style="margin-bottom:8px">
+    <span class="badge badge-POST">POST</span>
+    <span class="badge badge-jwt">🔐 JWT</span>
+  </div>
+  <h2 class="endpoint-title">Create Case</h2>
+  <div class="endpoint-url">
+    <span class="badge badge-POST">POST</span>
+    <span class="url-base">https://api.example.com/api/v1</span>
+    <span class="url-path">/cases</span>
+  </div>
+  <p class="endpoint-desc">Creates a new background verification case. Each case represents a candidate whose background needs to be verified. The case is automatically linked to the authenticated user as creator and defaults to <code style="color:#3fb950;font-family:monospace">NEW</code> status. A <code style="color:#79c0ff;font-family:monospace">callback_url</code> can be provided to receive real-time webhook notifications on every status transition.</p>
+
+  <div class="callout callout-info">
+    <span class="callout-icon">ℹ️</span>
+    <span><strong>comp_ref_no</strong> must follow the pattern <code>REF-{alphanumeric}</code> (e.g. <code>REF-2026-001234</code>) and must be unique across the platform. Duplicate values return a <code>409 Conflict</code>.</span>
+  </div>
+
+  <div class="param-table">
+    <div class="param-table-label">Request Headers</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Header</th><th>Value</th><th>Required</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td class="td-key">Authorization</td><td class="td-val">Bearer &lt;token&gt;</td><td><span class="badge-required">required</span></td><td class="td-desc">JWT access token from /auth/login</td></tr>
+        <tr><td class="td-key">Content-Type</td><td class="td-val">application/json</td><td><span class="badge-required">required</span></td><td class="td-desc">Request body format</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="param-table">
+    <div class="param-table-label">Request Body</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td class="td-key">comp_ref_no</td><td class="td-type">string</td><td><span class="badge-required">required</span></td><td class="td-desc">Unique reference. Format: <code style="font-family:monospace;color:#79c0ff">REF-{alphanumeric}</code> — e.g. <code style="font-family:monospace">REF-2026-001234</code></td></tr>
+        <tr><td class="td-key">candidate_name</td><td class="td-type">string</td><td><span class="badge-optional">optional</span></td><td class="td-desc">Full legal name of the candidate</td></tr>
+        <tr><td class="td-key">father_name</td><td class="td-type">string</td><td><span class="badge-optional">optional</span></td><td class="td-desc">Father's name for identity verification</td></tr>
+        <tr><td class="td-key">candidate_dob</td><td class="td-type">string (ISO 8601)</td><td><span class="badge-optional">optional</span></td><td class="td-desc">Date of birth. Format: <code style="font-family:monospace">1991-09-22</code></td></tr>
+        <tr><td class="td-key">street_address</td><td class="td-type">string</td><td><span class="badge-optional">optional</span></td><td class="td-desc">Candidate's residential street address</td></tr>
+        <tr><td class="td-key">city</td><td class="td-type">string</td><td><span class="badge-optional">optional</span></td><td class="td-desc">City of residence</td></tr>
+        <tr><td class="td-key">state</td><td class="td-type">string</td><td><span class="badge-optional">optional</span></td><td class="td-desc">State / province</td></tr>
+        <tr><td class="td-key">pincode</td><td class="td-type">string</td><td><span class="badge-optional">optional</span></td><td class="td-desc">Postal / ZIP code</td></tr>
+        <tr><td class="td-key">vendor</td><td class="td-type">string</td><td><span class="badge-optional">optional</span></td><td class="td-desc">Name of the vendor/employer associated with this candidate</td></tr>
+        <tr><td class="td-key">tat</td><td class="td-type">integer</td><td><span class="badge-optional">optional</span></td><td class="td-desc">Turnaround time in days. Default: <code style="font-family:monospace">5</code>. Used for overdue detection.</td></tr>
+        <tr><td class="td-key">remark</td><td class="td-type">string</td><td><span class="badge-optional">optional</span></td><td class="td-desc">Internal notes or instructions for the verification team</td></tr>
+        <tr><td class="td-key">callback_url</td><td class="td-type">string (URL)</td><td><span class="badge-optional">optional</span></td><td class="td-desc">Webhook endpoint to receive status change notifications for this case</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'cc-curl')">cURL</button>
+      <button class="tab-btn" onclick="switchTab(this,'cc-axios')">Axios</button>
+      <button class="tab-btn" onclick="switchTab(this,'cc-req')">Request Body</button>
+    </div>
+    <div id="cc-curl" class="tab-pane active">
+      <pre>curl -X POST https://api.example.com/api/v1/cases \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "comp_ref_no": "REF-2026-001234",
+    "candidate_name": "Ananya Reddy",
+    "father_name": "Suresh Reddy",
+    "candidate_dob": "1991-09-22",
+    "street_address": "42, Lake View Colony",
+    "city": "Hyderabad",
+    "state": "Telangana",
+    "pincode": "500032",
+    "vendor": "Vertex Solutions Pvt Ltd",
+    "tat": 7,
+    "remark": "Priority verification",
+    "callback_url": "https://your-system.com/webhooks/knk"
+  }'</pre>
+    </div>
+    <div id="cc-axios" class="tab-pane">
+      <pre>const axios = require('axios');
+
+const response = await axios.post(
+  'https://api.example.com/api/v1/cases',
+  {
+    comp_ref_no: 'REF-2026-001234',
+    candidate_name: 'Ananya Reddy',
+    father_name: 'Suresh Reddy',
+    candidate_dob: '1991-09-22',
+    city: 'Hyderabad',
+    state: 'Telangana',
+    vendor: 'Vertex Solutions Pvt Ltd',
+    tat: 7,
+    callback_url: 'https://your-system.com/webhooks/knk'
+  },
+  {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    }
+  }
+);
+
+console.log(response.data); // { success: true, data: { ... } }</pre>
+    </div>
+    <div id="cc-req" class="tab-pane">
+      <pre>{
+  "comp_ref_no": "REF-2026-001234",
+  "candidate_name": "Ananya Reddy",
+  "father_name": "Suresh Reddy",
+  "candidate_dob": "1991-09-22",
+  "street_address": "42, Lake View Colony",
+  "city": "Hyderabad",
+  "state": "Telangana",
+  "pincode": "500032",
+  "vendor": "Vertex Solutions Pvt Ltd",
+  "tat": 7,
+  "remark": "Priority background verification",
+  "callback_url": "https://your-system.com/webhooks/knk"
+}</pre>
+    </div>
+  </div>
+
+  <div class="response-grid">
+    <div>
+      <div class="response-label"><span class="badge-status badge-200">201</span> Success Response</div>
+      <div class="code-block mb-0">
+        <div class="code-header"><span class="code-lang">json</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+        <pre class="code-pre">{
+  "success": true,
+  "message": "Case created successfully",
+  "data": {
+    "_id": "YOUR_CASE_ID",
+    "comp_ref_no": "REF-2026-001234",
+    "candidate_name": "Ananya Reddy",
+    "father_name": "Suresh Reddy",
+    "candidate_dob": "1991-09-22T00:00:00.000Z",
+    "city": "Hyderabad",
+    "state": "Telangana",
+    "vendor": "Vertex Solutions Pvt Ltd",
+    "tat": 7,
+    "check_status": "NEW",
+    "verification_result": null,
+    "isArchived": false,
+    "user": "YOUR_USER_ID",
+    "createdAt": "2026-06-22T10:30:00.000Z",
+    "updatedAt": "2026-06-22T10:30:00.000Z"
+  }
+}</pre>
+      </div>
+    </div>
+    <div>
+      <div class="response-label"><span class="badge-status badge-4xx">4xx</span> Error Responses</div>
+      <div class="error-list">
+        <div class="error-item"><span class="error-code-cell">400</span><code class="error-msg">Validation failed: comp_ref_no is required</code></div>
+        <div class="error-item"><span class="error-code-cell">400</span><code class="error-msg">Invalid format. Use REF-001 or REF-2026-001111</code></div>
+        <div class="error-item"><span class="error-code-cell">409</span><code class="error-msg">Duplicate key: comp_ref_no already exists</code></div>
+        <div class="error-item"><span class="error-code-cell">401</span><code class="error-msg">Not authorized, token missing or expired</code></div>
+      </div>
+    </div>
+  </div>
+  <hr class="divider"/>
+</div>
+
+<!-- LIST CASES -->
+<div class="endpoint-section" id="list-cases">
+  <div class="flex flex-wrap items-center gap-2" style="margin-bottom:8px"><span class="badge badge-GET">GET</span><span class="badge badge-jwt">🔐 JWT</span></div>
+  <h2 class="endpoint-title">List Cases</h2>
+  <div class="endpoint-url"><span class="badge badge-GET">GET</span><span class="url-base">https://api.example.com/api/v1</span><span class="url-path">/cases</span></div>
+  <p class="endpoint-desc">Returns a paginated list of background verification cases. <strong>Admins</strong> see all cases; <strong>agents</strong> see only cases assigned to them. Supports rich filtering, sorting, full-text search, and overdue detection.</p>
+
+  <div class="param-table">
+    <div class="param-table-label">Query Parameters</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Parameter</th><th>Type</th><th>Default</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td class="td-key">page</td><td class="td-type">integer</td><td class="td-type">1</td><td class="td-desc">Page number for pagination</td></tr>
+        <tr><td class="td-key">limit</td><td class="td-type">integer</td><td class="td-type">5</td><td class="td-desc">Records per page. Max 100.</td></tr>
+        <tr><td class="td-key">status</td><td class="td-type">string</td><td class="td-type">—</td><td class="td-desc">Filter by status: <code style="font-family:monospace">NEW | IN_PROGRESS | Q_CHECK | DONE | INSUFFICIENT | ON_HOLD | STOPPED | REJECTED</code></td></tr>
+        <tr><td class="td-key">search</td><td class="td-type">string</td><td class="td-type">—</td><td class="td-desc">Case-insensitive search across <code style="font-family:monospace">comp_ref_no</code> and <code style="font-family:monospace">candidate_name</code></td></tr>
+        <tr><td class="td-key">sort</td><td class="td-type">string</td><td class="td-type">-createdAt</td><td class="td-desc">Sort field. Prefix with <code style="font-family:monospace">-</code> for descending. E.g. <code style="font-family:monospace">-createdAt</code>, <code style="font-family:monospace">candidate_name</code></td></tr>
+        <tr><td class="td-key">pending</td><td class="td-type">boolean</td><td class="td-type">—</td><td class="td-desc">When <code style="font-family:monospace">true</code>, returns only active (non-terminal) cases</td></tr>
+        <tr><td class="td-key">overdue</td><td class="td-type">boolean</td><td class="td-type">—</td><td class="td-desc">When <code style="font-family:monospace">true</code>, returns cases that have exceeded their TAT deadline</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'lc-curl')">cURL</button>
+      <button class="tab-btn" onclick="switchTab(this,'lc-axios')">Axios</button>
+    </div>
+    <div id="lc-curl" class="tab-pane active">
+      <pre>curl "https://api.example.com/api/v1/cases?page=1&limit=10&status=IN_PROGRESS&sort=-createdAt" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+# Search example
+curl "https://api.example.com/api/v1/cases?search=ananya&page=1&limit=20" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"
+
+# Overdue cases
+curl "https://api.example.com/api/v1/cases?overdue=true" \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"</pre>
+    </div>
+    <div id="lc-axios" class="tab-pane">
+      <pre>const response = await axios.get(
+  'https://api.example.com/api/v1/cases',
+  {
+    params: {
+      page: 1,
+      limit: 10,
+      status: 'IN_PROGRESS',
+      sort: '-createdAt',
+      search: 'Ananya'
+    },
+    headers: { Authorization: `Bearer ${token}` }
+  }
+);
+
+const { data, total, totalPages } = response.data;</pre>
+    </div>
+  </div>
+
+  <div class="response-label"><span class="badge-status badge-200">200</span> Success Response</div>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">json</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+    <pre class="code-pre">{
+  "success": true,
+  "page": 1,
+  "limit": 10,
+  "total": 142,
+  "totalPages": 15,
+  "sort": "-createdAt",
+  "data": [
+    {
+      "_id": "YOUR_CASE_ID",
+      "comp_ref_no": "REF-2026-001234",
+      "candidate_name": "Ananya Reddy",
+      "city": "Hyderabad",
+      "state": "Telangana",
+      "vendor": "Vertex Solutions Pvt Ltd",
+      "tat": 7,
+      "check_status": "IN_PROGRESS",
+      "verification_result": null,
+      "isArchived": false,
+      "user": { "_id": "YOUR_USER_ID", "email": "admin@example.com", "role": "admin" },
+      "assignedTo": { "_id": "YOUR_AGENT_ID", "email": "agent@example.com", "role": "agent" },
+      "createdAt": "2026-06-22T10:30:00.000Z",
+      "updatedAt": "2026-06-23T08:15:00.000Z"
+    }
+  ]
+}</pre>
+  </div>
+  <hr class="divider"/>
+</div>
+
+<!-- GET SINGLE CASE -->
+<div class="endpoint-section" id="get-case">
+  <div class="flex flex-wrap items-center gap-2" style="margin-bottom:8px"><span class="badge badge-GET">GET</span><span class="badge badge-jwt">🔐 JWT</span></div>
+  <h2 class="endpoint-title">Get Case</h2>
+  <div class="endpoint-url"><span class="badge badge-GET">GET</span><span class="url-base">https://api.example.com/api/v1</span><span class="url-path">/cases/:id</span></div>
+  <p class="endpoint-desc">Retrieves complete details of a single case, including verification results, proof document URL, assigned agent, verifier details, and audit trail references.</p>
+
+  <div class="param-table">
+    <div class="param-table-label">Path Parameters</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+      <tbody><tr><td class="td-key">id</td><td class="td-type">string (ObjectId)</td><td><span class="badge-required">required</span></td><td class="td-desc">MongoDB ObjectId of the case (from the <code style="font-family:monospace">_id</code> field)</td></tr></tbody>
+    </table></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'gc-curl')">cURL</button>
+      <button class="tab-btn" onclick="switchTab(this,'gc-axios')">Axios</button>
+    </div>
+    <div id="gc-curl" class="tab-pane active"><pre>curl https://api.example.com/api/v1/cases/YOUR_CASE_ID \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN"</pre></div>
+    <div id="gc-axios" class="tab-pane"><pre>const { data } = await axios.get(
+  `https://api.example.com/api/v1/cases/${caseId}`,
+  { headers: { Authorization: `Bearer ${token}` } }
+);</pre></div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">json — success response</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+    <pre class="code-pre">{
+  "success": true,
+  "data": {
+    "_id": "YOUR_CASE_ID",
+    "comp_ref_no": "REF-2026-001234",
+    "candidate_name": "Ananya Reddy",
+    "father_name": "Suresh Reddy",
+    "candidate_dob": "1991-09-22T00:00:00.000Z",
+    "street_address": "42, Lake View Colony",
+    "city": "Hyderabad",
+    "state": "Telangana",
+    "pincode": "500032",
+    "vendor": "Vertex Solutions Pvt Ltd",
+    "tat": 7,
+    "remark": "Priority verification",
+    "check_status": "Q_CHECK",
+    "verification_result": "GREEN",
+    "verification_remark": "All credentials verified successfully",
+    "verified_date": "2026-06-23T09:00:00.000Z",
+    "proof_document": "https://cdn.example.com/proofs/REF-2026-001234.pdf",
+    "insufficient_query": "",
+    "isArchived": false,
+    "user": { "_id": "YOUR_USER_ID", "email": "admin@example.com", "role": "admin" },
+    "assignedTo": { "_id": "YOUR_AGENT_ID", "email": "agent@example.com", "role": "agent" },
+    "verified_by": { "_id": "YOUR_AGENT_ID", "email": "agent@example.com", "role": "agent" },
+    "createdAt": "2026-06-22T10:30:00.000Z",
+    "updatedAt": "2026-06-23T09:00:00.000Z"
+  }
+}</pre>
+  </div>
+  <hr class="divider"/>
+</div>
+
+<!-- UPDATE STATUS -->
+<div class="endpoint-section" id="update-status">
+  <div class="flex flex-wrap items-center gap-2" style="margin-bottom:8px"><span class="badge badge-PUT">PUT</span><span class="badge badge-jwt">🔐 JWT</span></div>
+  <h2 class="endpoint-title">Update Case Status</h2>
+  <div class="endpoint-url"><span class="badge badge-PUT">PUT</span><span class="url-base">https://api.example.com/api/v1</span><span class="url-path">/cases/:id/status</span></div>
+  <p class="endpoint-desc">Updates the <code style="color:#79c0ff;font-family:monospace">check_status</code> of a case. Every status transition fires a POST webhook to the vendor's callback URL and creates an immutable audit log entry.</p>
+
+  <div class="callout callout-info">
+    <span class="callout-icon">ℹ️</span>
+    <span>Webhooks are fire-and-forget — their failure does not block the API response. Check the <strong>API Logs</strong> section for webhook delivery status.</span>
+  </div>
+
+  <div class="param-table">
+    <div class="param-table-label">Request Body</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+      <tbody><tr><td class="td-key">check_status</td><td class="td-type">string (enum)</td><td><span class="badge-required">required</span></td><td class="td-desc">New status. Valid values: <code style="font-family:monospace">NEW | IN_PROGRESS | Q_CHECK | DONE | INSUFFICIENT | ON_HOLD | STOPPED | REJECTED</code></td></tr></tbody>
+    </table></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'us-curl')">cURL</button>
+      <button class="tab-btn" onclick="switchTab(this,'us-axios')">Axios</button>
+    </div>
+    <div id="us-curl" class="tab-pane active"><pre>curl -X PUT https://api.example.com/api/v1/cases/YOUR_CASE_ID/status \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{"check_status": "IN_PROGRESS"}'</pre></div>
+    <div id="us-axios" class="tab-pane"><pre>await axios.put(
+  `https://api.example.com/api/v1/cases/${caseId}/status`,
+  { check_status: 'IN_PROGRESS' },
+  { headers: { Authorization: `Bearer ${token}` } }
+);</pre></div>
+  </div>
+  <hr class="divider"/>
+</div>
+
+<!-- ASSIGN CASE -->
+<div class="endpoint-section" id="assign-case">
+  <div class="flex flex-wrap items-center gap-2" style="margin-bottom:8px"><span class="badge badge-PATCH">PATCH</span><span class="badge badge-jwt">🔐 JWT (Admin)</span></div>
+  <h2 class="endpoint-title">Assign Case</h2>
+  <div class="endpoint-url"><span class="badge badge-PATCH">PATCH</span><span class="url-base">https://api.example.com/api/v1</span><span class="url-path">/cases/:id/assign</span></div>
+  <p class="endpoint-desc">Assigns a case to a specific agent. Only administrators can perform assignments. Once assigned, the agent will see the case in their dashboard and can update its status and verification details.</p>
+
+  <div class="param-table">
+    <div class="param-table-label">Request Body</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+      <tbody><tr><td class="td-key">assignedTo</td><td class="td-type">string (ObjectId)</td><td><span class="badge-required">required</span></td><td class="td-desc">MongoDB ObjectId of the agent user to assign the case to</td></tr></tbody>
+    </table></div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+    <pre class="code-pre">curl -X PATCH https://api.example.com/api/v1/cases/YOUR_CASE_ID/assign \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT" \
+  -H "Content-Type: application/json" \
+  -d '{"assignedTo": "YOUR_AGENT_ID"}'</pre>
+  </div>
+  <hr class="divider"/>
+</div>
+
+<!-- RAISE QUERY -->
+<div class="endpoint-section" id="raise-query">
+  <div class="flex flex-wrap items-center gap-2" style="margin-bottom:8px"><span class="badge badge-PATCH">PATCH</span><span class="badge badge-jwt">🔐 JWT</span></div>
+  <h2 class="endpoint-title">Raise Insufficient Query</h2>
+  <div class="endpoint-url"><span class="badge badge-PATCH">PATCH</span><span class="url-base">https://api.example.com/api/v1</span><span class="url-path">/cases/:id/query</span></div>
+  <p class="endpoint-desc">Marks a case as <code style="color:#f97316;font-family:monospace">INSUFFICIENT</code> and attaches a query message explaining what additional information is required. Automatically triggers a webhook to notify the vendor.</p>
+
+  <div class="param-table">
+    <div class="param-table-label">Request Body</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+      <tbody><tr><td class="td-key">query</td><td class="td-type">string</td><td><span class="badge-required">required</span></td><td class="td-desc">Detailed explanation of what information is missing or insufficient</td></tr></tbody>
+    </table></div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+    <pre class="code-pre">curl -X PATCH https://api.example.com/api/v1/cases/YOUR_CASE_ID/query \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "query": "Employment certificate from XYZ Corp (2019-2022) is missing. Please provide original document and HR contact details."
+  }'</pre>
+  </div>
+  <hr class="divider"/>
+</div>
+
+<!-- SAVE VERIFICATION -->
+<div class="endpoint-section" id="save-verification">
+  <div class="flex flex-wrap items-center gap-2" style="margin-bottom:8px"><span class="badge badge-PATCH">PATCH</span><span class="badge badge-jwt">🔐 JWT</span></div>
+  <h2 class="endpoint-title">Save Verification Result</h2>
+  <div class="endpoint-url"><span class="badge badge-PATCH">PATCH</span><span class="url-base">https://api.example.com/api/v1</span><span class="url-path">/cases/:id/verify</span></div>
+  <p class="endpoint-desc">Records the final verification outcome. Sets the verification result and remarks, logs the verifying agent and timestamp, and automatically transitions the case to <code style="color:#8b5cf6;font-family:monospace">Q_CHECK</code> status for quality review.</p>
+
+  <div class="param-table">
+    <div class="param-table-label">Request Body</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td class="td-key">verification_result</td><td class="td-type">string (enum)</td><td><span class="badge-required">required</span></td><td class="td-desc">Outcome: <code style="font-family:monospace">GREEN</code> (clear) | <code style="font-family:monospace">RED</code> (major discrepancy) | <code style="font-family:monospace">ORANGE</code> (minor issues) | <code style="font-family:monospace">INSUFFICIENT</code> (incomplete)</td></tr>
+        <tr><td class="td-key">verification_remark</td><td class="td-type">string</td><td><span class="badge-required">required</span></td><td class="td-desc">Detailed explanation of the verification outcome</td></tr>
+        <tr><td class="td-key">proof_document</td><td class="td-type">string (URL)</td><td><span class="badge-optional">optional</span></td><td class="td-desc">URL of supporting document if already uploaded</td></tr>
+      </tbody>
+    </table></div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+    <pre class="code-pre">curl -X PATCH https://api.example.com/api/v1/cases/YOUR_CASE_ID/verify \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "verification_result": "GREEN",
+    "verification_remark": "All employment records and educational certificates verified. No discrepancies found."
+  }'</pre>
+  </div>
+  <hr class="divider"/>
+</div>
+
+<!-- UPLOAD PROOF -->
+<div class="endpoint-section" id="upload-proof">
+  <div class="flex flex-wrap items-center gap-2" style="margin-bottom:8px"><span class="badge badge-PATCH">PATCH</span><span class="badge badge-jwt">🔐 JWT</span></div>
+  <h2 class="endpoint-title">Upload Proof Document</h2>
+  <div class="endpoint-url"><span class="badge badge-PATCH">PATCH</span><span class="url-base">https://api.example.com/api/v1</span><span class="url-path">/cases/:id/upload-proof</span></div>
+  <p class="endpoint-desc">Uploads a proof document (PDF, JPG, PNG) for a verification case. The file is stored and the URL is linked to the case. Maximum file size: 10MB. Use <code style="color:#79c0ff;font-family:monospace">multipart/form-data</code> encoding.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+    <pre class="code-pre">curl -X PATCH https://api.example.com/api/v1/cases/YOUR_CASE_ID/upload-proof \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -F "proof=@/path/to/document.pdf"</pre>
+  </div>
+  <hr class="divider"/>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- CLIENT INTEGRATION APIs                               -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="client-api">
+  <div class="section-header">
+    <h1 class="section-title">Client Integration APIs</h1>
+    <p class="section-sub">Vendor-facing endpoints for querying case status using API key authentication. Designed for system-to-system integrations.</p>
+  </div>
+  <div class="callout callout-warning">
+    <span class="callout-icon">⚠️</span>
+    <span>These endpoints use <strong>API Key authentication</strong> (<code>x-api-key</code> header) — not JWT. Access is automatically scoped to your vendor account. You can only query cases belonging to your organization.</span>
+  </div>
+  <hr class="divider" style="margin-bottom:40px"/>
+</section>
+
+<!-- GET CASE STATUS (CLIENT) -->
+<div class="endpoint-section" id="client-status">
+  <div class="flex flex-wrap items-center gap-2" style="margin-bottom:8px"><span class="badge badge-GET">GET</span><span class="badge badge-apikey">🔑 API Key</span></div>
+  <h2 class="endpoint-title">Get Case Status</h2>
+  <div class="endpoint-url"><span class="badge badge-GET">GET</span><span class="url-base">https://api.example.com/api/v1</span><span class="url-path">/client/status/:applicationId</span></div>
+  <p class="endpoint-desc">Returns the current status and verification result for a specific case identified by its reference number. Results are automatically scoped to your vendor account.</p>
+
+  <div class="param-table">
+    <div class="param-table-label">Path Parameters</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Parameter</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+      <tbody><tr><td class="td-key">applicationId</td><td class="td-type">string</td><td><span class="badge-required">required</span></td><td class="td-desc">The <code style="font-family:monospace">comp_ref_no</code> of the case (e.g. <code style="font-family:monospace">REF-2026-001234</code>)</td></tr></tbody>
+    </table></div>
+  </div>
+  <div class="param-table">
+    <div class="param-table-label">Request Headers</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Header</th><th>Value</th><th>Required</th><th>Description</th></tr></thead>
+      <tbody><tr><td class="td-key">x-api-key</td><td class="td-val">YOUR_API_KEY</td><td><span class="badge-required">required</span></td><td class="td-desc">API key issued by KNK Partners for your vendor account</td></tr></tbody>
+    </table></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'cs-curl')">cURL</button>
+      <button class="tab-btn" onclick="switchTab(this,'cs-axios')">Axios</button>
+      <button class="tab-btn" onclick="switchTab(this,'cs-python')">Python</button>
+    </div>
+    <div id="cs-curl" class="tab-pane active"><pre>curl https://api.example.com/api/v1/client/status/REF-2026-001234 \
+  -H "x-api-key: YOUR_API_KEY_HERE"</pre></div>
+    <div id="cs-axios" class="tab-pane"><pre>const response = await axios.get(
+  'https://api.example.com/api/v1/client/status/REF-2026-001234',
+  { headers: { 'x-api-key': 'YOUR_API_KEY_HERE' } }
+);</pre></div>
+    <div id="cs-python" class="tab-pane"><pre>import requests
+
+headers = {'x-api-key': 'YOUR_API_KEY_HERE'}
+r = requests.get(
+    'https://api.example.com/api/v1/client/status/REF-2026-001234',
+    headers=headers
+)
+data = r.json()</pre></div>
+  </div>
+
+  <div class="response-grid">
+    <div>
+      <div class="response-label"><span class="badge-status badge-200">200</span> Success Response</div>
+      <div class="code-block mb-0">
+        <div class="code-header"><span class="code-lang">json</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+        <pre class="code-pre">{
+  "success": true,
+  "applicationId": "REF-2026-001234",
+  "candidateName": "Ananya Reddy",
+  "vendor": "Vertex Solutions Pvt Ltd",
+  "status": "DONE",
+  "remark": "All credentials verified successfully",
+  "updatedAt": "2026-06-23T09:00:00.000Z"
+}</pre>
+      </div>
+    </div>
+    <div>
+      <div class="response-label"><span class="badge-status badge-4xx">4xx</span> Error Responses</div>
+      <div class="error-list">
+        <div class="error-item"><span class="error-code-cell">401</span><code class="error-msg">API Key missing</code></div>
+        <div class="error-item"><span class="error-code-cell">403</span><code class="error-msg">Invalid API Key</code></div>
+        <div class="error-item"><span class="error-code-cell">403</span><code class="error-msg">Client disabled</code></div>
+        <div class="error-item"><span class="error-code-cell">404</span><code class="error-msg">Case not found</code></div>
+      </div>
+    </div>
+  </div>
+  <hr class="divider"/>
+</div>
+
+<!-- BULK STATUS -->
+<div class="endpoint-section" id="bulk-status">
+  <div class="flex flex-wrap items-center gap-2" style="margin-bottom:8px"><span class="badge badge-POST">POST</span><span class="badge badge-apikey">🔑 API Key</span></div>
+  <h2 class="endpoint-title">Bulk Case Status</h2>
+  <div class="endpoint-url"><span class="badge badge-POST">POST</span><span class="url-base">https://api.example.com/api/v1</span><span class="url-path">/client/status/bulk</span></div>
+  <p class="endpoint-desc">Retrieves status for multiple cases in a single API call. Pass an array of reference numbers; receive all matching cases scoped to your vendor. Ideal for batch status reconciliation and portfolio sweeps. Maximum 100 IDs per request.</p>
+
+  <div class="param-table">
+    <div class="param-table-label">Request Body</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
+      <tbody><tr><td class="td-key">applicationIds</td><td class="td-type">string[]</td><td><span class="badge-required">required</span></td><td class="td-desc">Array of <code style="font-family:monospace">comp_ref_no</code> values. Max 100 per request.</td></tr></tbody>
+    </table></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'bs-curl')">cURL</button>
+      <button class="tab-btn" onclick="switchTab(this,'bs-axios')">Axios</button>
+    </div>
+    <div id="bs-curl" class="tab-pane active"><pre>curl -X POST https://api.example.com/api/v1/client/status/bulk \
+  -H "x-api-key: YOUR_API_KEY" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "applicationIds": [
+      "REF-2026-001234",
+      "REF-2026-001235",
+      "REF-2026-001236"
+    ]
+  }'</pre></div>
+    <div id="bs-axios" class="tab-pane"><pre>const response = await axios.post(
+  'https://api.example.com/api/v1/client/status/bulk',
+  {
+    applicationIds: [
+      'REF-2026-001234',
+      'REF-2026-001235',
+      'REF-2026-001236'
+    ]
+  },
+  { headers: { 'x-api-key': 'YOUR_API_KEY' } }
+);</pre></div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">json — success response</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+    <pre class="code-pre">{
+  "success": true,
+  "count": 3,
+  "cases": [
+    {
+      "applicationId": "REF-2026-001234",
+      "candidateName": "Ananya Reddy",
+      "vendor": "Vertex Solutions Pvt Ltd",
+      "status": "DONE",
+      "updatedAt": "2026-06-23T09:00:00.000Z"
+    },
+    {
+      "applicationId": "REF-2026-001235",
+      "candidateName": "Rahul Sharma",
+      "vendor": "Vertex Solutions Pvt Ltd",
+      "status": "IN_PROGRESS",
+      "updatedAt": "2026-06-23T10:30:00.000Z"
+    }
+  ]
+}</pre>
+  </div>
+  <hr class="divider"/>
+</div>
+
+<!-- VENDOR STATUS -->
+<div class="endpoint-section" id="vendor-status">
+  <div class="flex flex-wrap items-center gap-2" style="margin-bottom:8px"><span class="badge badge-GET">GET</span><span class="badge badge-apikey">🔑 API Key</span></div>
+  <h2 class="endpoint-title">Get All Cases by Vendor</h2>
+  <div class="endpoint-url"><span class="badge badge-GET">GET</span><span class="url-base">https://api.example.com/api/v1</span><span class="url-path">/client/status/vendor</span></div>
+  <p class="endpoint-desc">Returns all cases associated with your vendor account. The vendor identity is derived automatically from your API key — no additional parameter needed. Use this for complete portfolio status overviews.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+    <pre class="code-pre">curl https://api.example.com/api/v1/client/status/vendor \
+  -H "x-api-key: YOUR_API_KEY"
+
+# Response
+{
+  "success": true,
+  "vendor": "Vertex Solutions Pvt Ltd",
+  "count": 24,
+  "cases": [
+    { "applicationId": "REF-2026-001234", "candidateName": "Ananya Reddy", "status": "DONE", "updatedAt": "..." },
+    { "applicationId": "REF-2026-001235", "candidateName": "Rahul Sharma", "status": "IN_PROGRESS", "updatedAt": "..." }
+  ]
+}</pre>
+  </div>
+  <hr class="divider"/>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- DASHBOARD                                              -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="dashboard">
+  <div class="section-header">
+    <h1 class="section-title">Dashboard APIs</h1>
+    <p class="section-sub">Aggregate statistics for the case management dashboard. Admins see platform-wide; agents see their assigned cases only.</p>
+  </div>
+
+  <div class="flex flex-wrap items-center gap-2" style="margin-bottom:8px"><span class="badge badge-GET">GET</span><span class="badge badge-jwt">🔐 JWT</span></div>
+  <div class="endpoint-url"><span class="badge badge-GET">GET</span><span class="url-base">https://api.example.com/api/v1</span><span class="url-path">/cases/stats</span></div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">json — response</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+    <pre class="code-pre">{
+  "success": true,
+  "data": {
+    "totalCases": 312,
+    "pendingCases": 187,
+    "overdueCases": 14,
+    "newCases": 23,
+    "inProgressCases": 89,
+    "qCheckCases": 41,
+    "doneCases": 121,
+    "insufficientCases": 18,
+    "onHoldCases": 7,
+    "stoppedCases": 3,
+    "rejectedCases": 10
+  }
+}</pre>
+  </div>
+  <hr class="divider"/>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- REPORTS                                               -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="reports">
+  <div class="section-header">
+    <h1 class="section-title">Reports APIs</h1>
+    <p class="section-sub">Analytical summaries for business reporting, SLA monitoring, and client-facing verification dashboards.</p>
+  </div>
+
+  <div class="flex flex-wrap items-center gap-2" style="margin-bottom:8px"><span class="badge badge-GET">GET</span><span class="badge badge-jwt">🔐 JWT</span></div>
+  <div class="endpoint-url"><span class="badge badge-GET">GET</span><span class="url-base">https://api.example.com/api/v1</span><span class="url-path">/reports/summary</span></div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">json — response</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+    <pre class="code-pre">{
+  "success": true,
+  "data": {
+    "totalVerified": 245,
+    "greenCases": 190,
+    "redCases": 28,
+    "orangeCases": 17,
+    "insufficientCases": 10,
+    "byVendor": [
+      { "vendor": "Vertex Solutions Pvt Ltd", "count": 84, "completed": 72 },
+      { "vendor": "GlobalHR Services", "count": 61, "completed": 55 }
+    ],
+    "averageTat": 4.8,
+    "generatedAt": "2026-06-23T10:00:00.000Z"
+  }
+}</pre>
+  </div>
+  <hr class="divider"/>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- USER APIs                                             -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="users">
+  <div class="section-header">
+    <h1 class="section-title">User APIs</h1>
+    <p class="section-sub">User registration, authentication, profile management, and avatar upload.</p>
+  </div>
+
+  <!-- Login -->
+  <div id="login" style="scroll-margin-top:80px;margin-bottom:36px">
+    <div class="flex items-center gap-2" style="margin-bottom:8px"><span class="badge badge-POST">POST</span><span style="color:#7d8590;font-size:12px">No auth required</span></div>
+    <h2 style="font-size:19px;font-weight:800;color:#e6edf3;margin-bottom:10px">Login</h2>
+    <div class="endpoint-url" style="margin-bottom:14px"><span class="badge badge-POST">POST</span><span class="url-base">https://api.example.com/api/v1</span><span class="url-path">/auth/login</span></div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+      <pre class="code-pre">curl -X POST https://api.example.com/api/v1/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"email": "admin@example.com", "password": "StrongP@ssw0rd"}'
+
+# Response
+{
+  "success": true,
+  "token": "Your_JWT_Token_Here",
+  "user": {
+    "_id": "Your_User_ID_Here",
+    "email": "admin@example.com",
+    "role": "admin",
+    "name": "Admin User",
+    "lastLogin": "2026-06-23T10:00:00.000Z"
+  }
+}</pre>
+    </div>
+  </div>
+
+  <!-- Register -->
+  <div id="register" style="scroll-margin-top:80px;margin-bottom:36px">
+    <div class="flex items-center gap-2" style="margin-bottom:8px"><span class="badge badge-POST">POST</span></div>
+    <h2 style="font-size:19px;font-weight:800;color:#e6edf3;margin-bottom:10px">Register User</h2>
+    <div class="endpoint-url" style="margin-bottom:14px"><span class="badge badge-POST">POST</span><span class="url-base">https://api.example.com/api/v1</span><span class="url-path">/auth/register</span></div>
+    <p style="color:#8b949e;margin-bottom:14px;font-size:14px">Creates a new platform user. Passwords are hashed with bcrypt (cost factor 10) before storage. Default role is <code style="color:#79c0ff;background:#161b22;padding:2px 6px;border-radius:4px;font-family:monospace">agent</code>.</p>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">json — request body</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+      <pre class="code-pre">{
+  "email": "agent@example.com",
+  "password": "StrongP@ssw0rd",
+  "name": "Priya Nair",
+  "phone": "+91-9876543210",
+  "role": "agent"
+}</pre>
+    </div>
+  </div>
+  <hr class="divider"/>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- VENDOR MANAGEMENT                                     -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="vendor-management">
+  <div class="section-header">
+    <h1 class="section-title">Vendor Management</h1>
+    <p class="section-sub">Manage external client/vendor integrations and API key lifecycle. All endpoints require admin JWT.</p>
+  </div>
+
+  <div class="table-wrap" style="margin-bottom:20px">
+    <table>
+      <thead><tr><th>Method</th><th>Endpoint</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><span class="badge badge-GET">GET</span></td><td class="td-key">/clients</td><td class="td-desc">List all registered vendor clients with API key status</td></tr>
+        <tr><td><span class="badge badge-POST">POST</span></td><td class="td-key">/clients</td><td class="td-desc">Register a new vendor — auto-generates a unique API key</td></tr>
+        <tr><td><span class="badge badge-PATCH">PATCH</span></td><td class="td-key">/clients/:id/toggle-status</td><td class="td-desc">Activate or deactivate a vendor. Deactivated keys return 403.</td></tr>
+        <tr><td><span class="badge badge-PATCH">PATCH</span></td><td class="td-key">/clients/:id/regenerate-key</td><td class="td-desc">Issue a new API key, instantly invalidating the previous one</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div id="create-client" style="scroll-margin-top:80px">
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">bash — create vendor client</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+      <pre class="code-pre">curl -X POST https://api.example.com/api/v1/clients \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "vendorName": "Vertex Solutions Pvt Ltd",
+    "callbackUrl": "https://vertex.example.com/webhooks/knk"
+  }'
+
+# Response
+{
+  "success": true,
+  "data": {
+    "_id": "User_ID_Here",
+    "vendorName": "Vertex Solutions Pvt Ltd",
+    "apiKey": "knk_live_a1b2c3d4e5f6g7h8i9j0k1l2m3n4o5p6",
+    "callbackUrl": "https://vertex.example.com/webhooks/knk",
+    "isActive": true,
+    "createdAt": "2026-06-22T10:00:00.000Z"
+  }
+}</pre>
+    </div>
+  </div>
+  <hr class="divider"/>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- WEBHOOKS                                              -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="webhooks">
+  <div class="section-header">
+    <h1 class="section-title">Webhook Integration</h1>
+    <p class="section-sub">Receive real-time POST callbacks when case status changes occur — no polling required.</p>
+  </div>
+
+  <p style="color:#8b949e;margin-bottom:16px;font-size:14.5px;line-height:1.75">When a case's status changes, KNK Partners sends an HTTP POST to your configured <code style="color:#79c0ff;background:#161b22;padding:2px 6px;border-radius:4px;font-family:monospace">callback_url</code>. The webhook fires on every status transition including INSUFFICIENT queries and verification results.</p>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">http — webhook payload</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+    <pre class="code-pre">POST https://your-system.com/webhooks/knk
+Content-Type: application/json
+
+{
+  "applicationId": "REF-2026-001234",
+  "candidateName": "Ananya Reddy",
+  "vendor": "Vertex Solutions Pvt Ltd",
+  "status": "DONE",
+  "remark": "All credentials verified successfully",
+  "updatedAt": "2026-06-23T09:00:00.000Z"
+}</pre>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">javascript — webhook handler (Node.js/Express)</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+    <pre class="code-pre">const express = require('express');
+const app = express();
+app.use(express.json());
+
+app.post('/webhooks/knk', async (req, res) => {
+  const { applicationId, status, remark, updatedAt } = req.body;
+
+  // Log the event
+  console.log(`[KNK Webhook] ${applicationId} → ${status}`);
+
+  // Update your local database
+  await updateCandidateRecord(applicationId, { status, remark, updatedAt });
+
+  // Respond with 200 within 10 seconds to acknowledge
+  res.status(200).json({ received: true });
+});
+
+app.listen(3000);</pre>
+  </div>
+
+  <div class="info-box">
+    <div class="info-box-title">Webhook Best Practices</div>
+    <ul class="info-list">
+      <li><span class="bullet-green bullet">✓</span>Respond with HTTP 2xx within 10 seconds. Slow responses are retried up to 3 times with exponential backoff.</li>
+      <li><span class="bullet-green bullet">✓</span>Implement idempotency — the same event may be delivered more than once. Use <code style="font-family:monospace">applicationId</code> as the idempotency key.</li>
+      <li><span class="bullet-green bullet">✓</span>Queue processing asynchronously — don't block the HTTP response on database writes.</li>
+      <li><span class="bullet-green bullet">✓</span>Use HTTPS endpoints only. Plain HTTP webhook URLs are rejected.</li>
+      <li><span class="bullet-green bullet">✓</span>Verify payloads by cross-referencing the <code style="font-family:monospace">applicationId</code> against your local records.</li>
+    </ul>
+  </div>
+  <hr class="divider"/>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- AUDIT LOGS                                            -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="audit-logs">
+  <div class="section-header">
+    <h1 class="section-title">Audit Logs</h1>
+    <p class="section-sub">Immutable, chronological log of every user action and system event across the platform.</p>
+  </div>
+
+  <div class="endpoint-url"><span class="badge badge-GET">GET</span><span class="url-base">https://api.example.com/api/v1</span><span class="url-path">/audit-logs</span></div>
+
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">json — response</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+    <pre class="code-pre">{
+  "success": true,
+  "data": [
+    {
+      "_id": "YOUR_AUDIT_LOG_ID",
+      "userId": "YOUR_USER_ID",
+      "action": "STATUS_UPDATED",
+      "caseId": "YOUR_CASE_ID",
+      "details": "Status changed to IN_PROGRESS",
+      "module": "CASE",
+      "createdAt": "2026-06-23T10:00:00.000Z"
+    },
+    {
+      "_id": "YOUR_AUDIT_LOG_ID_2",
+      "userId": "YOUR_USER_ID",
+      "action": "CASE_ASSIGNED",
+      "caseId": "YOUR_CASE_ID",
+      "details": "Assigned to YOUR_AGENT_ID",
+      "module": "CASE",
+      "createdAt": "2026-06-23T09:30:00.000Z"
+    }
+  ]
+}</pre>
+  </div>
+
+  <div class="info-box">
+    <div class="info-box-title">Audited Action Types</div>
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <code style="font-family:monospace;font-size:11px;color:#79c0ff;background:#0d1117;border:1px solid #21262d;padding:4px 10px;border-radius:6px">CASE_CREATED</code>
+      <code style="font-family:monospace;font-size:11px;color:#79c0ff;background:#0d1117;border:1px solid #21262d;padding:4px 10px;border-radius:6px">STATUS_UPDATED</code>
+      <code style="font-family:monospace;font-size:11px;color:#79c0ff;background:#0d1117;border:1px solid #21262d;padding:4px 10px;border-radius:6px">CASE_ASSIGNED</code>
+      <code style="font-family:monospace;font-size:11px;color:#79c0ff;background:#0d1117;border:1px solid #21262d;padding:4px 10px;border-radius:6px">VERIFICATION_SAVED</code>
+      <code style="font-family:monospace;font-size:11px;color:#79c0ff;background:#0d1117;border:1px solid #21262d;padding:4px 10px;border-radius:6px">INSUFFICIENT_RAISED</code>
+      <code style="font-family:monospace;font-size:11px;color:#79c0ff;background:#0d1117;border:1px solid #21262d;padding:4px 10px;border-radius:6px">CASE_ARCHIVED</code>
+      <code style="font-family:monospace;font-size:11px;color:#79c0ff;background:#0d1117;border:1px solid #21262d;padding:4px 10px;border-radius:6px">CASE_RESTORED</code>
+    </div>
+  </div>
+  <hr class="divider"/>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- ADVANCED                                              -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="advanced">
+  <div class="section-header">
+    <h1 class="section-title">Advanced Query Features</h1>
+  </div>
+
+  <div id="filtering" style="scroll-margin-top:80px;margin-bottom:32px">
+    <h2 style="font-size:19px;font-weight:800;color:#e6edf3;margin-bottom:10px">Filtering</h2>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">http</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+      <pre class="code-pre">GET /cases?status=IN_PROGRESS          # By specific status
+GET /cases?pending=true                # Non-terminal cases only
+GET /cases?overdue=true                # Exceeded TAT deadline
+GET /cases?status=IN_PROGRESS&page=2   # Combined</pre>
+    </div>
+  </div>
+
+  <div id="sorting" style="scroll-margin-top:80px;margin-bottom:32px">
+    <h2 style="font-size:19px;font-weight:800;color:#e6edf3;margin-bottom:10px">Sorting</h2>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">http</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+      <pre class="code-pre">GET /cases?sort=-createdAt    # Newest first (default)
+GET /cases?sort=createdAt     # Oldest first
+GET /cases?sort=candidate_name  # Alphabetical by name
+GET /cases?sort=tat             # Shortest TAT first</pre>
+    </div>
+  </div>
+
+  <div id="pagination" style="scroll-margin-top:80px;margin-bottom:32px">
+    <h2 style="font-size:19px;font-weight:800;color:#e6edf3;margin-bottom:10px">Pagination</h2>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">http</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+      <pre class="code-pre">GET /cases?page=3&limit=25
+
+// Pagination metadata in every list response:
+{
+  "page": 3,
+  "limit": 25,
+  "total": 312,
+  "totalPages": 13
+}</pre>
+    </div>
+  </div>
+
+  <div id="search" style="scroll-margin-top:80px;margin-bottom:32px">
+    <h2 style="font-size:19px;font-weight:800;color:#e6edf3;margin-bottom:10px">Search</h2>
+    <p style="color:#8b949e;margin-bottom:12px;font-size:14px">Full-text, case-insensitive search across <code style="color:#79c0ff;background:#161b22;padding:2px 6px;border-radius:4px;font-family:monospace">comp_ref_no</code> and <code style="color:#79c0ff;background:#161b22;padding:2px 6px;border-radius:4px;font-family:monospace">candidate_name</code>.</p>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">http</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+      <pre class="code-pre">GET /cases?search=REF-2026-001        # By ref number prefix
+GET /cases?search=ananya              # By candidate name
+GET /cases?search=reddy&status=DONE  # Combined</pre>
+    </div>
+  </div>
+
+  <div id="bulk-operations" style="scroll-margin-top:80px;margin-bottom:32px">
+    <h2 style="font-size:19px;font-weight:800;color:#e6edf3;margin-bottom:10px">Bulk Delete Cases</h2>
+    <div class="callout callout-danger">
+      <span class="callout-icon">🚨</span>
+      <span>Bulk delete is <strong>permanent and irreversible</strong>. Cases must be archived before they can be bulk deleted. Admin access required.</span>
+    </div>
+    <div class="code-block">
+      <div class="code-header"><span class="code-lang">bash</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+      <pre class="code-pre">curl -X DELETE https://api.example.com/api/v1/cases/bulk-delete \
+  -H "Authorization: Bearer YOUR_ADMIN_JWT" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "ids": [
+      "YOUR_CASE_ID_1",
+      "YOUR_CASE_ID_2"
+    ]
+  }'</pre>
+    </div>
+  </div>
+  <hr class="divider"/>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- POSTMAN                                               -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="postman">
+  <div class="section-header">
+    <h1 class="section-title">Postman Collection</h1>
+    <p class="section-sub">Import the complete API collection into Postman for instant endpoint testing with pre-configured auth.</p>
+  </div>
+
+  <div class="client-card">
+    <div class="client-card-inner">
+      <div class="client-icon">📮</div>
+      <div style="flex:1">
+        <div style="font-weight:700;color:#e6edf3;font-size:15px;margin-bottom:4px">KNK Partners API Collection v1.0</div>
+        <div style="font-size:13px;color:#7d8590;line-height:1.6">Complete collection with all endpoints, pre-configured headers, environment variables, and example request bodies.</div>
+      </div>
+    </div>
+    <div class="client-actions">
+      <a href="#" class="btn-postman">↓ Download Collection JSON</a>
+      <a href="https://www.postman.com" target="_blank" class="btn-outline">Run in Postman ↗</a>
+    </div>
+    <div style="margin-top:18px;padding-top:16px;border-top:1px solid #21262d">
+      <div style="font-size:11px;color:#7d8590;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-bottom:12px">Setup</div>
+      <ol style="list-style:none;padding:0">
+        <li style="display:flex;gap:10px;font-size:13px;color:#8b949e;padding:3px 0"><span style="color:#1f6feb;font-weight:700">1.</span> Import the collection JSON (File → Import)</li>
+        <li style="display:flex;gap:10px;font-size:13px;color:#8b949e;padding:3px 0"><span style="color:#1f6feb;font-weight:700">2.</span> Create an environment with variables: <code style="font-family:monospace;color:#79c0ff">BASE_URL</code>, <code style="font-family:monospace;color:#79c0ff">TOKEN</code>, <code style="font-family:monospace;color:#79c0ff">API_KEY</code></li>
+        <li style="display:flex;gap:10px;font-size:13px;color:#8b949e;padding:3px 0"><span style="color:#1f6feb;font-weight:700">3.</span> Run the Login request first — it auto-saves the JWT to <code style="font-family:monospace;color:#79c0ff">TOKEN</code></li>
+        <li style="display:flex;gap:10px;font-size:13px;color:#8b949e;padding:3px 0"><span style="color:#1f6feb;font-weight:700">4.</span> All requests reference environment variables automatically</li>
+      </ol>
+    </div>
+  </div>
+  <hr class="divider"/>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- SDK EXAMPLES                                          -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="sdk">
+  <div class="section-header">
+    <h1 class="section-title">SDK Examples</h1>
+    <p class="section-sub">Production-ready code patterns for the most common integration scenarios.</p>
+  </div>
+
+  <h3 style="font-size:16px;font-weight:700;color:#e6edf3;margin-bottom:12px">Node.js — Internal Platform Integration</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">javascript</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+    <pre class="code-pre">const axios = require('axios');
+
+class KNKAdmin {
+  constructor() {
+    this.baseUrl = 'https://api.example.com/api/v1';
+    this.token = null;
+  }
+
+  async login(email, password) {
+    const { data } = await axios.post(`${this.baseUrl}/auth/login`, { email, password });
+    this.token = data.token;
+    return data.user;
+  }
+
+  get headers() {
+    return { Authorization: `Bearer ${this.token}` };
+  }
+
+  async createCase(payload) {
+    const { data } = await axios.post(`${this.baseUrl}/cases`, payload, { headers: this.headers });
+    return data.data;
+  }
+
+  async updateStatus(caseId, status) {
+    const { data } = await axios.put(
+      `${this.baseUrl}/cases/${caseId}/status`,
+      { check_status: status },
+      { headers: this.headers }
+    );
+    return data.data;
+  }
+
+  async getStats() {
+    const { data } = await axios.get(`${this.baseUrl}/cases/stats`, { headers: this.headers });
+    return data.data;
+  }
+}
+
+// Usage
+const knk = new KNKAdmin();
+await knk.login('admin@example.com', 'password');
+
+const newCase = await knk.createCase({
+  comp_ref_no: 'REF-2026-001234',
+  candidate_name: 'Ananya Reddy',
+  vendor: 'Vertex Solutions Pvt Ltd',
+  tat: 7,
+  callback_url: 'https://yourapp.com/webhooks/knk'
+});
+
+const stats = await knk.getStats();
+console.log(`Total cases: ${stats.totalCases}`);
+</pre>
+  </div>
+
+  <h3 style="font-size:16px;font-weight:700;color:#e6edf3;margin-bottom:12px;margin-top:24px">Python — Vendor Client Integration</h3>
+  <div class="code-block">
+    <div class="code-header"><span class="code-lang">python</span><button class="copy-btn" onclick="copyBlock(this)"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg> Copy</button></div>
+    <pre class="code-pre">import requests
+from typing import List
+
+class KNKClient:
+    BASE_URL = "https://api.example.com/api/v1"
+
+    def __init__(self, api_key: str):
+        self.session = requests.Session()
+        self.session.headers.update({
+            "x-api-key": api_key,
+            "Content-Type": "application/json"
+        })
+
+    def get_status(self, application_id: str) -> dict:
+        r = self.session.get(f"{self.BASE_URL}/client/status/{application_id}")
+        r.raise_for_status()
+        return r.json()
+
+    def get_bulk_status(self, application_ids: List[str]) -> dict:
+        r = self.session.post(
+            f"{self.BASE_URL}/client/status/bulk",
+            json={"applicationIds": application_ids}
+        )
+        r.raise_for_status()
+        return r.json()
+
+    def get_all_cases(self) -> dict:
+        r = self.session.get(f"{self.BASE_URL}/client/status/vendor")
+        r.raise_for_status()
+        return r.json()
+
+# Usage
+client = KNKClient(api_key="knk_live_xxxxxxxxxxxxxxxxxxxx")
+
+# Single case
+result = client.get_status("REF-2026-001234")
+print(f"Status: {result['status']}, Remark: {result['remark']}")
+
+# Bulk check
+bulk = client.get_bulk_status(["REF-2026-001234", "REF-2026-001235"])
+for case in bulk["cases"]:
+    print(f"{case['applicationId']}: {case['status']}")
+
+# All vendor cases
+all_cases = client.get_all_cases()
+print(f"Total vendor cases: {all_cases['count']}")</pre>
+  </div>
+  <hr class="divider"/>
+</section>
+
+<!-- ═══════════════════════════════════════════════════════ -->
+<!-- CHANGELOG                                             -->
+<!-- ═══════════════════════════════════════════════════════ -->
+<section class="section" id="changelog">
+  <div class="section-header">
+    <h1 class="section-title">Changelog</h1>
+    <p class="section-sub">API version history and release notes.</p>
+  </div>
+
+  <div class="release-card">
+    <div class="release-header">
+      <span class="release-version">v1.0.0</span>
+      <span class="release-badge rb-major">major</span>
+      <span class="release-date">2026-06-01</span>
+    </div>
+    <div class="release-body">
+      <ul>
+        <li>Initial public release of KNK Partners REST API</li>
+        <li>JWT authentication with role-based access (admin / agent)</li>
+        <li>API Key authentication for vendor system integrations</li>
+        <li>Complete Case CRUD: create, read, update, delete, archive, restore</li>
+        <li>Full verification workflow: assign → verify → Q_CHECK → DONE</li>
+        <li>Insufficient query system with automatic status transitions</li>
+        <li>Bulk delete for archived cases (admin only)</li>
+        <li>Real-time webhook notifications on all status changes</li>
+        <li>Client Integration APIs: single, bulk, and full-vendor status endpoints</li>
+        <li>Dashboard statistics with TAT-based overdue detection</li>
+        <li>Reports summary with vendor breakdown and average TAT</li>
+        <li>Immutable audit logging for all case and user operations</li>
+        <li>Filtering, sorting, pagination, and full-text search</li>
+        <li>Proof document upload with Cloudinary storage</li>
+        <li>Vendor Management: create, activate, deactivate, regenerate API keys</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="ft-brand">
+    <div class="logo-icon" style="width:22px;height:22px;font-size:11px">K</div>
+    <span style="font-weight:700;color:#c9d1d9">KNK Partners</span>
+  </div>
+  <div>Background Verification &amp; Case Management Platform</div>
+  <div style="margin-top:6px">
+    <a href="https://example.com">example.com</a>
+    &nbsp;·&nbsp;
+    <a href="mailto:api-support@example.com">API Support</a>
+    &nbsp;·&nbsp;
+    <span style="color:#484f58">API Reference v1.0</span>
+  </div>
+</footer>
+
+</main>
+</div>
+
+<script>
+// ── Navigation Data ──────────────────────────────────────────────────────────
+const navData = [
+  { id: 'introduction', label: 'Introduction', icon: '📖' },
+  { id: 'quickstart', label: 'Quick Start', icon: '⚡' },
+  {
+    id: 'authentication', label: 'Authentication', icon: '🔐',
+    children: [
+      { id: 'jwt-auth', label: 'JWT Authentication' },
+      { id: 'apikey-auth', label: 'API Key Authentication' },
+    ]
+  },
+  { id: 'rate-limiting', label: 'Rate Limiting', icon: '🚦' },
+  { id: 'errors', label: 'Error Handling', icon: '⚠️' },
+  {
+    id: 'cases', label: 'Case APIs', icon: '📁',
+    children: [
+      { id: 'create-case', label: 'Create Case' },
+      { id: 'list-cases', label: 'List Cases' },
+      { id: 'get-case', label: 'Get Case' },
+      { id: 'update-status', label: 'Update Status' },
+      { id: 'assign-case', label: 'Assign Case' },
+      { id: 'raise-query', label: 'Raise Insufficient Query' },
+      { id: 'save-verification', label: 'Save Verification' },
+      { id: 'upload-proof', label: 'Upload Proof' },
+    ]
+  },
+  {
+    id: 'client-api', label: 'Client Integration APIs', icon: '🔌',
+    children: [
+      { id: 'client-status', label: 'Get Case Status' },
+      { id: 'bulk-status', label: 'Bulk Case Status' },
+      { id: 'vendor-status', label: 'Vendor Cases Status' },
+    ]
+  },
+  { id: 'dashboard', label: 'Dashboard APIs', icon: '📊' },
+  { id: 'reports', label: 'Reports APIs', icon: '📈' },
+  {
+    id: 'users', label: 'User APIs', icon: '👤',
+    children: [
+      { id: 'login', label: 'Login' },
+      { id: 'register', label: 'Register User' },
+    ]
+  },
+  {
+    id: 'vendor-management', label: 'Vendor Management', icon: '🏢',
+    children: [
+      { id: 'create-client', label: 'Create Client' },
+    ]
+  },
+  { id: 'webhooks', label: 'Webhook Integration', icon: '🔗' },
+  { id: 'audit-logs', label: 'Audit Logs', icon: '📋' },
+  {
+    id: 'advanced', label: 'Advanced', icon: '⚙️',
+    children: [
+      { id: 'filtering', label: 'Filtering' },
+      { id: 'sorting', label: 'Sorting' },
+      { id: 'pagination', label: 'Pagination' },
+      { id: 'search', label: 'Search' },
+      { id: 'bulk-operations', label: 'Bulk Operations' },
+    ]
+  },
+  { id: 'postman', label: 'Postman Collection', icon: '📮' },
+  { id: 'sdk', label: 'SDK Examples', icon: '💻' },
+  { id: 'changelog', label: 'Changelog', icon: '📝' },
+];
+
+let openGroups = new Set(['cases', 'client-api', 'users', 'authentication', 'vendor-management', 'advanced']);
+
+function buildNav(items) {
+  const tree = document.getElementById('nav-tree');
+  tree.innerHTML = '';
+  items.forEach(item => {
+    const group = document.createElement('div');
+    group.className = 'nav-group';
+
+    if (item.children) {
+      const isOpen = openGroups.has(item.id);
+      group.innerHTML = `
+        <button class="nav-item ${isOpen ? 'open' : ''}" onclick="toggleGroup('${item.id}', this)">
+          <span class="icon">${item.icon || ''}</span>
+          <span style="flex:1">${item.label}</span>
+          <span class="chevron">›</span>
+        </button>
+        <div class="nav-children" id="children-${item.id}" style="display:${isOpen ? 'block' : 'none'}">
+          ${item.children.map(c => `
+            <button class="nav-child" id="nav-${c.id}" onclick="navigateTo('${c.id}')">${c.label}</button>
+          `).join('')}
+        </div>
+      `;
+    } else {
+      group.innerHTML = `
+        <button class="nav-item" id="nav-${item.id}" onclick="navigateTo('${item.id}')">
+          <span class="icon">${item.icon || ''}</span>
+          <span>${item.label}</span>
+        </button>
+      `;
+    }
+    tree.appendChild(group);
+  });
+}
+
+function toggleGroup(id, btn) {
+  const children = document.getElementById('children-' + id);
+  const isOpen = children.style.display !== 'none';
+  children.style.display = isOpen ? 'none' : 'block';
+  btn.classList.toggle('open', !isOpen);
+  if (!isOpen) openGroups.add(id); else openGroups.delete(id);
+}
+
+function navigateTo(id) {
+  const el = document.getElementById(id);
+  if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  setActive(id);
+  if (window.innerWidth < 768) toggleMobile();
+}
+
+function setActive(id) {
+  document.querySelectorAll('.nav-item.active, .nav-child.active').forEach(el => el.classList.remove('active'));
+  const target = document.getElementById('nav-' + id);
+  if (target) target.classList.add('active');
+}
+
+function filterNav(q) {
+  if (!q) { buildNav(navData); return; }
+  const lower = q.toLowerCase();
+  const filtered = navData.flatMap(item => {
+    const match = item.label.toLowerCase().includes(lower);
+    const childMatches = item.children?.filter(c => c.label.toLowerCase().includes(lower)) || [];
+    if (match) return [item];
+    if (childMatches.length) return [{ ...item, children: childMatches }];
+    return [];
+  });
+  buildNav(filtered);
+}
+
+function focusSearch() {
+  document.getElementById('sidebar-search-input')?.focus();
+}
+
+// ── Mobile ───────────────────────────────────────────────────────────────────
+function toggleMobile() {
+  const sidebar = document.getElementById('sidebar');
+  const overlay = document.getElementById('mobile-overlay');
+  sidebar.classList.toggle('open');
+  overlay.classList.toggle('show');
+}
+
+// ── Tabs ─────────────────────────────────────────────────────────────────────
+function switchTab(btn, paneId) {
+  const tabBar = btn.closest('.tab-bar');
+  const tabs = btn.closest('.tabs');
+  tabBar.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  tabs.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(paneId)?.classList.add('active');
+}
+
+// ── Copy ─────────────────────────────────────────────────────────────────────
+function copyBlock(btn) {
+  const pre = btn.closest('.code-block, .tabs').querySelector('pre.code-pre, .tab-pane.active pre');
+  if (!pre) return;
+  navigator.clipboard.writeText(pre.textContent).then(() => {
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Copied';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.innerHTML = orig; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+function copyText(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.innerHTML;
+    btn.innerHTML = '<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg> Copied';
+    btn.style.color = '#3fb950';
+    setTimeout(() => { btn.innerHTML = orig; btn.style.color = ''; }, 2000);
+  });
+}
+
+// ── Scroll Spy ────────────────────────────────────────────────────────────────
+const allIds = navData.flatMap(item => item.children ? [item.id, ...item.children.map(c => c.id)] : [item.id]);
+
+const observer = new IntersectionObserver(entries => {
+  entries.forEach(entry => {
+    if (entry.isIntersecting) setActive(entry.target.id);
+  });
+}, { rootMargin: '-20% 0px -70% 0px' });
+
+window.addEventListener('DOMContentLoaded', () => {
+  buildNav(navData);
+  setActive('introduction');
+
+  allIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) observer.observe(el);
+  });
+
+  // Show search and logo sub on larger screens
+  if (window.innerWidth >= 640) {
+    document.getElementById('topbar-search').style.display = 'flex';
+    document.getElementById('logo-sub-desktop').style.display = 'inline';
+  }
+});
+</script>
+</body>
+</html>
+HTMLEOF

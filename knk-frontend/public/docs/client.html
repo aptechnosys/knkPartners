@@ -1,0 +1,38 @@
+<!doctype html><html><head><meta charset='utf-8'><title>KNK Client API</title><style>
+body{font-family:Arial;background:#0f172a;color:#eee;margin:0}
+nav{position:fixed;width:240px;height:100%;background:#111827;padding:20px}
+nav a{display:block;color:#cbd5e1;text-decoration:none;margin:10px 0}
+main{margin-left:260px;padding:30px}
+section{background:#1e293b;padding:20px;border-radius:10px;margin-bottom:20px}
+pre{background:#020617;color:#7dd3fc;padding:12px;border-radius:8px;overflow:auto}
+table{width:100%;border-collapse:collapse}th,td{border:1px solid #334155;padding:8px}
+</style></head><body>
+<nav><h2>KNK Client API</h2>
+<a href='#intro'>Introduction</a>
+<a href='#auth'>Authentication</a>
+<a href='#submit'>Submit Case</a>
+<a href='#single'>Single Status</a>
+<a href='#vendor'>Vendor Status</a>
+<a href='#status'>Statuses</a>
+<a href='#errors'>Errors</a></nav>
+<main>
+<section id='intro'><h1>KNK Partners Client Integration API</h1><p>Base URL</p><pre>https://knkpartner.com/api/v1</pre><br><p>Endpoint URL Client To Server for POST Cases requests</p><pre>https://@Example.com/api/v1/api-inbox/client</pre></section>
+<section id='auth'><h2>Authentication</h2><pre>x-api-key: YOUR_API_KEY
+Content-Type: application/json</pre></section>
+<section id='submit'><h2>POST /api-inbox</h2><pre>{
+"applicationId":"REF-2026-000888",
+"candidateName":"Faiyaz Khan",
+"fatherName":"Azad Khan",
+"dob":"16 Feb 1995",
+"city":"Mumbai",
+"state":"Maharashtra",
+"vendor":"APtechnosys Agency",
+"tat":15,
+"remark":"Urgent verification"
+}</pre></section>
+<section id='single'><h2>GET /client/status/{applicationId}</h2><pre>GET /client/status/REF-2026-000888
+x-api-key: YOUR_API_KEY</pre></section>
+<section id='vendor'><h2>GET /client/status/vendor</h2><pre>GET /client/status/vendor<br>x-api-key: YOUR_API_KEY</pre></section>
+<section id='status'><h2>Status Values</h2><table><tr><th>Status</th><th>Description</th></tr><tr><td>NEW</td><td>Case Received</td></tr><tr><td>IN_PROGRESS</td><td>Verification Running</td></tr><tr><td>Q_CHECK</td><td>Quality Check</td></tr><tr><td>DONE</td><td>Completed</td></tr><tr><td>INSUFFICIENT</td><td>Need More Information</td></tr><tr><td>ON_HOLD</td><td>On Hold</td></tr><tr><td>STOPPED</td><td>Stopped</td></tr><tr><td>REJECTED</td><td>Rejected</td></tr></table></section>
+<section id='errors'><h2>Error Codes</h2><table><tr><th>Code</th><th>Description</th></tr><tr><td>200</td><td>Success</td></tr><tr><td>400</td><td>Bad Request</td></tr><tr><td>401</td><td>Invalid API Key</td></tr><tr><td>404</ td><td>Case Not Found</ td></tr><tr><td>500</td> <td >Internal Server Error</td ></tr ></table ></section >
+</main></body></html>
