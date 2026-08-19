@@ -34,19 +34,14 @@ const caseSchema = new mongoose.Schema(
         default: "",
       },
 
-    check_status: {
+   check_status: {
       type: String,
       enum: [
         "NEW",
         "IN_PROGRESS",
-        "Q_CHECK",
-        "DONE",
-        "INSUFFICIENT",
-        "ON_HOLD",
-        "STOPPED",
-        "REJECTED"
+        "COMPLETED",
       ],
-      default: "NEW"
+      default: "NEW",
     },
 
     user: {

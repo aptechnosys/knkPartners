@@ -7,7 +7,11 @@ import { useAuth } from "../context/AuthContext";
 import LoadingSpinner from "../components/LoadingSpinner";
 import { MdArrowBack, MdSave, MdRefresh, MdPerson, MdWarning } from "react-icons/md";
 
-const STATUSES = ["NEW", "IN_PROGRESS", "Q_CHECK", "DONE", "INSUFFICIENT", "ON_HOLD", "STOPPED", "REJECTED"];
+const STATUSES = [
+  "NEW",
+  "IN_PROGRESS",
+  "COMPLETED",
+];
 
 function InfoRow({ label, value }) {
   return (

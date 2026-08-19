@@ -27,49 +27,12 @@ const STATUS_CARDS = [
   },
 
   {
-    key: "Q_CHECK",
-    label: "Q-Check",
-    countKey: "qCheckCases",
-    color: "bg-purple-50 text-purple-700 border-purple-100"
-  },
-
-  {
-    key: "DONE",
-    label: "Done",
-    countKey: "doneCases",
+    key: "COMPLETED",
+    label: "Completed",
+    countKey: "completedCases",
     color: "bg-green-50 text-green-700 border-green-100"
-  },
-
-  {
-    key: "INSUFFICIENT",
-    label: "Insufficient",
-    countKey: "insufficientCases",
-    color: "bg-orange-50 text-orange-700 border-orange-100"
-  },
-
-  {
-    key: "ON_HOLD",
-    label: "On Hold",
-    countKey: "onHoldCases",
-    color: "bg-yellow-50 text-yellow-700 border-yellow-100"
-  },
-
-  {
-    key: "STOPPED",
-    label: "Stopped",
-    countKey: "stoppedCases",
-    color: "bg-slate-50 text-slate-600 border-slate-100"
-  },
-
-  {
-    key: "REJECTED",
-    label: "Rejected",
-    countKey: "rejectedCases",
-    color: "bg-red-50 text-red-700 border-red-100"
   }
 ];
-
-
 
 
 function StatCard({
@@ -156,7 +119,7 @@ export default function Dashboard() {
             activityRes
           ] = await Promise.all([
             API.get("/reports/summary"),
-            API.get("/cases?limit=5"),
+            API.get("/cases?limit=10"),
             API.get("/api-inbox/activity"),
           ]);
 
@@ -184,7 +147,7 @@ const notificationCount =
 
    const completedToday = recentCases.filter(
   c =>
-    c.check_status === "DONE" &&
+    c.check_status === "COMPLETED" &&
     new Date(c.updatedAt).toDateString() ===
     new Date().toDateString()
 ).length;
@@ -254,17 +217,11 @@ const notificationCount =
                 c.tat
               );
 
-              return (
-                tatLeft !== null &&
-                tatLeft < 0 &&
-                ![
-                  "DONE",
-                  "REJECTED",
-                  "STOPPED",
-                ].includes(
-                  c.check_status?.toUpperCase()
-                )
-              );
+             return (
+            tatLeft !== null &&
+            tatLeft < 0 &&
+            c.check_status?.toUpperCase() !== "COMPLETED"
+          );
             }).length
           }
           icon={MdWarning}
@@ -284,7 +241,7 @@ const notificationCount =
               <MdSyncAlt className="text-blue-600 text-xl" />
               <h2 className="font-bold text-slate-900">Cases by Status</h2>
             </div>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {STATUS_CARDS.map(s => (
                 <div key={s.key}
                   onClick={() => {

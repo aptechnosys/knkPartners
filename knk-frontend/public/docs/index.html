@@ -636,11 +636,7 @@ Retry-After: 30   # Only present when rate limited (429)</pre>
       <div class="status-pill"><span class="status-pill-dot c-slate"></span><span class="status-pill-name">NEW</span><span class="status-pill-desc" style="margin-left:4px">· Received, pending assignment</span></div>
       <div class="status-pill"><span class="status-pill-dot c-blue"></span><span class="status-pill-name">IN_PROGRESS</span><span class="status-pill-desc" style="margin-left:4px">· Active verification</span></div>
       <div class="status-pill"><span class="status-pill-dot c-purple"></span><span class="status-pill-name">Q_CHECK</span><span class="status-pill-desc" style="margin-left:4px">· Quality review</span></div>
-      <div class="status-pill"><span class="status-pill-dot c-green"></span><span class="status-pill-name">DONE</span><span class="status-pill-desc" style="margin-left:4px">· Complete</span></div>
-      <div class="status-pill"><span class="status-pill-dot c-orange"></span><span class="status-pill-name">INSUFFICIENT</span><span class="status-pill-desc" style="margin-left:4px">· Query raised</span></div>
-      <div class="status-pill"><span class="status-pill-dot c-yellow"></span><span class="status-pill-name">ON_HOLD</span></div>
-      <div class="status-pill"><span class="status-pill-dot c-gray"></span><span class="status-pill-name">STOPPED</span></div>
-      <div class="status-pill"><span class="status-pill-dot c-red"></span><span class="status-pill-name">REJECTED</span></div>
+      <div class="status-pill"><span class="status-pill-dot c-green"></span><span class="status-pill-name">COMPLETED</span><span class="status-pill-desc" style="margin-left:4px">· Complete</span></div>
     </div>
     <div style="font-size:11px;color:#7d8590;text-transform:uppercase;letter-spacing:.1em;font-weight:700;margin-top:16px;margin-bottom:12px">Verification Results</div>
     <div class="status-pills">
@@ -828,7 +824,7 @@ console.log(response.data); // { success: true, data: { ... } }</pre>
       <tbody>
         <tr><td class="td-key">page</td><td class="td-type">integer</td><td class="td-type">1</td><td class="td-desc">Page number for pagination</td></tr>
         <tr><td class="td-key">limit</td><td class="td-type">integer</td><td class="td-type">5</td><td class="td-desc">Records per page. Max 100.</td></tr>
-        <tr><td class="td-key">status</td><td class="td-type">string</td><td class="td-type">—</td><td class="td-desc">Filter by status: <code style="font-family:monospace">NEW | IN_PROGRESS | Q_CHECK | DONE | INSUFFICIENT | ON_HOLD | STOPPED | REJECTED</code></td></tr>
+        <tr><td class="td-key">status</td><td class="td-type">string</td><td class="td-type">—</td><td class="td-desc">Filter by status: <code style="font-family:monospace">NEW | IN_PROGRESS | COMPLETED |  </code></td></tr>
         <tr><td class="td-key">search</td><td class="td-type">string</td><td class="td-type">—</td><td class="td-desc">Case-insensitive search across <code style="font-family:monospace">comp_ref_no</code> and <code style="font-family:monospace">candidate_name</code></td></tr>
         <tr><td class="td-key">sort</td><td class="td-type">string</td><td class="td-type">-createdAt</td><td class="td-desc">Sort field. Prefix with <code style="font-family:monospace">-</code> for descending. E.g. <code style="font-family:monospace">-createdAt</code>, <code style="font-family:monospace">candidate_name</code></td></tr>
         <tr><td class="td-key">pending</td><td class="td-type">boolean</td><td class="td-type">—</td><td class="td-desc">When <code style="font-family:monospace">true</code>, returns only active (non-terminal) cases</td></tr>
@@ -985,7 +981,7 @@ const { data, total, totalPages } = response.data;</pre>
     <div class="param-table-label">Request Body</div>
     <div class="table-wrap"><table>
       <thead><tr><th>Field</th><th>Type</th><th>Required</th><th>Description</th></tr></thead>
-      <tbody><tr><td class="td-key">check_status</td><td class="td-type">string (enum)</td><td><span class="badge-required">required</span></td><td class="td-desc">New status. Valid values: <code style="font-family:monospace">NEW | IN_PROGRESS | Q_CHECK | DONE | INSUFFICIENT | ON_HOLD | STOPPED | REJECTED</code></td></tr></tbody>
+      <tbody><tr><td class="td-key">check_status</td><td class="td-type">string (enum)</td><td><span class="badge-required">required</span></td><td class="td-desc">New status. Valid values: <code style="font-family:monospace">NEW | IN_PROGRESS | COMPLETED </code></td></tr></tbody>
     </table></div>
   </div>
 
@@ -1107,6 +1103,560 @@ const { data, total, totalPages } = response.data;</pre>
   <hr class="divider"/>
 </div>
 
+<!-- BULK STATUS UPDATE -->
+<div class="endpoint-section" id="bulk-status">
+
+  <div class="flex flex-wrap items-center gap-2" style="margin-bottom:8px">
+    <span class="badge badge-PUT">PUT</span>
+    <span class="badge badge-jwt">🔐 JWT</span>
+  </div>
+
+  <h2 class="endpoint-title">Bulk Status Update</h2>
+
+  <div class="endpoint-url">
+    <span class="badge badge-PUT">PUT</span>
+    <span class="url-base">https://api.example.com/api/v1</span>
+    <span class="url-path">/cases/bulk-status</span>
+  </div>
+
+  <p class="endpoint-desc">
+    Updates the
+    <code style="color:#79c0ff;font-family:monospace">check_status</code>
+    of multiple cases in a single request. A maximum of 100 cases can be
+    updated per request. Every status transition fires a webhook to the
+    vendor's callback URL and creates an audit log entry.
+  </p>
+
+  <div class="callout callout-info">
+    <span class="callout-icon">ℹ️</span>
+    <span>
+      The API identifies cases using their
+      <strong>comp_ref_no</strong>. Webhook failures do not prevent the
+      case status from being updated.
+    </span>
+  </div>
+
+  <div class="param-table">
+
+    <div class="param-table-label">Request Body</div>
+
+    <div class="table-wrap">
+      <table>
+
+        <thead>
+          <tr>
+            <th>Field</th>
+            <th>Type</th>
+            <th>Required</th>
+            <th>Description</th>
+          </tr>
+        </thead>
+
+        <tbody>
+
+          <tr>
+            <td class="td-key">comp_ref_nos</td>
+
+            <td class="td-type">array[string]</td>
+
+            <td>
+              <span class="badge-required">required</span>
+            </td>
+
+            <td class="td-desc">
+              Array of case reference numbers to update.
+              Maximum 100 cases per request.
+            </td>
+          </tr>
+
+          <tr>
+            <td class="td-key">check_status</td>
+
+            <td class="td-type">string (enum)</td>
+
+            <td>
+              <span class="badge-required">required</span>
+            </td>
+
+            <td class="td-desc">
+              New status. Valid values:
+              <code style="font-family:monospace">
+                NEW | IN_PROGRESS | COMPLETED
+              </code>
+            </td>
+          </tr>
+
+        </tbody>
+
+      </table>
+    </div>
+
+  </div>
+
+
+  <div class="tabs">
+
+    <div class="tab-bar">
+
+      <button
+        class="tab-btn active"
+        onclick="switchTab(this,'bs-curl')"
+      >
+        cURL
+      </button>
+
+      <button
+        class="tab-btn"
+        onclick="switchTab(this,'bs-axios')"
+      >
+        Axios
+      </button>
+
+    </div>
+
+
+    <div id="bs-curl" class="tab-pane active">
+
+<pre>curl -X PUT https://api.example.com/api/v1/cases/bulk-status \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "comp_ref_nos": [
+      "REF-2026-010595",
+      "REF-2026-010234"
+    ],
+    "check_status": "IN_PROGRESS"
+  }'</pre>
+
+    </div>
+
+
+    <div id="bs-axios" class="tab-pane">
+
+<pre>await axios.put(
+  'https://api.example.com/api/v1/cases/bulk-status',
+  {
+    comp_ref_nos: [
+      'REF-2026-010595',
+      'REF-2026-010234'
+    ],
+    check_status: 'IN_PROGRESS'
+  },
+  {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  }
+);</pre>
+
+    </div>
+
+  </div>
+
+
+  <div class="param-table">
+
+    <div class="param-table-label">Successful Response</div>
+
+    <div class="code-block">
+<pre>{
+  "success": true,
+  "message": "2 cases updated successfully.",
+  "modifiedCount": 2
+}</pre>
+    </div>
+
+  </div>
+
+
+  <div class="param-table">
+
+    <div class="param-table-label">Error Responses</div>
+
+    <div class="code-block">
+<pre>{
+  "success": false,
+  "message": "Please select at least one case."
+}</pre>
+    </div>
+
+    <div class="code-block">
+<pre>{
+  "success": false,
+  "message": "Maximum 100 cases allowed."
+}</pre>
+    </div>
+
+    <div class="code-block">
+<pre>{
+  "success": false,
+  "message": "No matching cases found."
+}</pre>
+    </div>
+
+  </div>
+
+  <hr class="divider"/>
+
+</div>
+
+<!-- BULK UPLOAD -->
+<div class="endpoint-section" id="bulk-upload">
+
+  <div class="flex flex-wrap items-center gap-2" style="margin-bottom:8px">
+    <span class="badge badge-POST">POST</span>
+    <span class="badge badge-jwt">🔐 JWT</span>
+    <span class="badge badge-admin">👑 ADMIN</span>
+  </div>
+
+  <h2 class="endpoint-title">Bulk Upload</h2>
+
+  <div class="endpoint-url">
+    <span class="badge badge-POST">POST</span>
+    <span class="url-base">https://api.example.com/api/v1</span>
+    <span class="url-path">/cases/bulk-upload</span>
+  </div>
+
+  <p class="endpoint-desc">
+    Uploads multiple case verification records using an Excel file
+    and a ZIP archive containing the corresponding proof documents.
+    The Excel file and ZIP files are validated and matched before
+    processing the cases.
+  </p>
+
+
+  <div class="callout callout-info">
+
+    <span class="callout-icon">ℹ️</span>
+
+    <span>
+      The <strong>File Name</strong> value in the Excel sheet must
+      match the corresponding proof filename inside the ZIP archive.
+      The file extension is ignored during matching.
+    </span>
+
+  </div>
+
+
+  <div class="param-table">
+
+    <div class="param-table-label">
+      Request Body — multipart/form-data
+    </div>
+
+    <div class="table-wrap">
+
+      <table>
+
+        <thead>
+
+          <tr>
+            <th>Field</th>
+            <th>Type</th>
+            <th>Required</th>
+            <th>Description</th>
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+          <tr>
+
+            <td class="td-key">
+              excel
+            </td>
+
+            <td class="td-type">
+              file
+            </td>
+
+            <td>
+              <span class="badge-required">
+                required
+              </span>
+            </td>
+
+            <td class="td-desc">
+              Excel file containing the case verification data.
+            </td>
+
+          </tr>
+
+
+          <tr>
+
+            <td class="td-key">
+              zip
+            </td>
+
+            <td class="td-type">
+              file
+            </td>
+
+            <td>
+              <span class="badge-required">
+                required
+              </span>
+            </td>
+
+            <td class="td-desc">
+              ZIP archive containing the proof documents.
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+
+  <div class="param-table">
+
+    <div class="param-table-label">
+      Required Excel Columns
+    </div>
+
+    <div class="table-wrap">
+
+      <table>
+
+        <thead>
+
+          <tr>
+            <th>Column</th>
+            <th>Description</th>
+          </tr>
+
+        </thead>
+
+        <tbody>
+
+          <tr>
+
+            <td class="td-key">
+              Reference No
+            </td>
+
+            <td class="td-desc">
+              Existing case reference number.
+            </td>
+
+          </tr>
+
+
+          <tr>
+
+            <td class="td-key">
+              File Name
+            </td>
+
+            <td class="td-desc">
+              Proof filename used to match the file inside the ZIP archive.
+            </td>
+
+          </tr>
+
+
+          <tr>
+
+            <td class="td-key">
+              Verify Status
+            </td>
+
+            <td class="td-desc">
+              Verification status provided in the Excel file.
+            </td>
+
+          </tr>
+
+
+          <tr>
+
+            <td class="td-key">
+              Colour Code
+            </td>
+
+            <td class="td-desc">
+              Verification colour code.
+            </td>
+
+          </tr>
+
+
+          <tr>
+
+            <td class="td-key">
+              Verification Date
+            </td>
+
+            <td class="td-desc">
+              Date on which the verification was performed.
+            </td>
+
+          </tr>
+
+        </tbody>
+
+      </table>
+
+    </div>
+
+  </div>
+
+
+  <div class="callout callout-info">
+
+    <span class="callout-icon">📁</span>
+
+    <span>
+
+      <strong>File matching example:</strong>
+
+      If the Excel contains
+      <code style="font-family:monospace">
+        REF-001
+      </code>
+
+      in the <strong>File Name</strong> column, the ZIP can contain:
+
+      <code style="font-family:monospace">
+        REF-001.pdf
+      </code>
+
+      or another file extension with the same filename.
+
+    </span>
+
+  </div>
+
+
+  <div class="tabs">
+
+    <div class="tab-bar">
+
+      <button
+        class="tab-btn active"
+        onclick="switchTab(this,'bu-curl')"
+      >
+        cURL
+      </button>
+
+      <button
+        class="tab-btn"
+        onclick="switchTab(this,'bu-axios')"
+      >
+        Axios
+      </button>
+
+    </div>
+
+
+    <div id="bu-curl" class="tab-pane active">
+
+<pre>curl -X POST https://api.example.com/api/v1/cases/bulk-upload \
+  -H "Authorization: Bearer YOUR_JWT_TOKEN" \
+  -F "excel=@cases.xlsx" \
+  -F "zip=@proofs.zip"</pre>
+
+    </div>
+
+
+    <div id="bu-axios" class="tab-pane">
+
+<pre>const formData = new FormData();
+
+formData.append('excel', excelFile);
+formData.append('zip', zipFile);
+
+await axios.post(
+  'https://api.example.com/api/v1/cases/bulk-upload',
+  formData,
+  {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'multipart/form-data'
+    }
+  }
+);</pre>
+
+    </div>
+
+  </div>
+
+
+  <div class="param-table">
+
+    <div class="param-table-label">
+      Processing
+    </div>
+
+    <div class="code-block">
+
+<pre>Excel + ZIP
+     ↓
+Validate uploaded files
+     ↓
+Read Excel
+     ↓
+Validate Excel data
+     ↓
+Extract ZIP
+     ↓
+Match proof files
+     ↓
+Find cases in database
+     ↓
+Process matched cases</pre>
+
+    </div>
+
+  </div>
+
+
+  <div class="param-table">
+
+    <div class="param-table-label">
+      Error Response
+    </div>
+
+    <div class="code-block">
+
+<pre>{
+  "success": false,
+  "message": "Excel file and ZIP file are required."
+}</pre>
+
+    </div>
+
+  </div>
+
+
+  <div class="param-table">
+
+    <div class="param-table-label">
+      Possible Processing Errors
+    </div>
+
+    <div class="code-block">
+
+<pre>Proof file not found for Reference No REF-001
+
+Case not found for Reference No REF-001</pre>
+
+    </div>
+
+  </div>
+
+
+  <hr class="divider"/>
+
+</div>
+
 <!-- ═══════════════════════════════════════════════════════ -->
 <!-- CLIENT INTEGRATION APIs                               -->
 <!-- ═══════════════════════════════════════════════════════ -->
@@ -1176,7 +1726,7 @@ data = r.json()</pre></div>
   "applicationId": "REF-2026-001234",
   "candidateName": "Ananya Reddy",
   "vendor": "Vertex Solutions Pvt Ltd",
-  "status": "DONE",
+  "status": "COMPLETED",
   "remark": "All credentials verified successfully",
   "updatedAt": "2026-06-23T09:00:00.000Z"
 }</pre>
@@ -1890,6 +2440,9 @@ const navData = [
       { id: 'raise-query', label: 'Raise Insufficient Query' },
       { id: 'save-verification', label: 'Save Verification' },
       { id: 'upload-proof', label: 'Upload Proof' },
+      { id: 'bulk-status', label: 'Bulk Status Update' },
+      { id: 'bulk-upload', label: 'Bulk Upload' },
+
     ]
   },
   {

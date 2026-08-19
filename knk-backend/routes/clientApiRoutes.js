@@ -5,6 +5,7 @@ const {
   getCaseStatus,
   getBulkCaseStatus,
   getVendorCasesStatus,
+  downloadProofDocument,
 } = require("../controllers/clientApiController");
 
 const apiKeyAuth = require("../middlewares/apiKeyAuth");
@@ -27,6 +28,13 @@ router.get(
   clientLimiter,
   apiKeyAuth,
   getVendorCasesStatus
+);
+/* Proof Document Download */
+router.get(
+  "/proof/:applicationId",
+  clientLimiter,
+  apiKeyAuth,
+  downloadProofDocument
 );
 
 /* Single Case Status */

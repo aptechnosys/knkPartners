@@ -64,20 +64,84 @@ app.use(
 /* Body Parser */
 app.use(express.json());
 
-/* Static Uploads */
+/*
+====================================================
+UPLOAD SECURITY
+====================================================
+
+IMPORTANT:
+Do NOT expose the complete /uploads directory.
+
+Proof documents are private and must only be accessed
+through the authenticated API endpoint:
+
+GET /api/v1/client/proof/:applicationId
+
+Only avatars are publicly accessible.
+*/
+
+/* Uploads Root */
 const uploadsPath = path.resolve(__dirname, "uploads");
+
+/* Public Avatars */
+const avatarsPath = path.join(
+  uploadsPath,
+  "avatars"
+);
+
+app.use(
+  "/uploads/avatars",
+  express.static(avatarsPath)
+);
+
+/*
+Proof documents are intentionally NOT exposed
+through express.static().
+
+DO NOT add:
 
 app.use("/uploads", express.static(uploadsPath));
 
+because that would make proof files publicly accessible.
+*/
+
 /* Routes */
 app.use("/api/v1", caseRoutes);
-app.use("/api/v1/auth", authRoutes);
-app.use("/api/v1/api-inbox", ApiInboxRoutes);
-app.use("/api/v1/api-logs", ApiLogRoutes);
-app.use("/api/v1/audit-logs", auditLogRoutes);
-app.use("/api/v1/reports", reportRoutes);
-app.use("/api/v1/client", clientApiRoutes);
-app.use("/api/v1/clients", clientRoutes);
+
+app.use(
+  "/api/v1/auth",
+  authRoutes
+);
+
+app.use(
+  "/api/v1/api-inbox",
+  ApiInboxRoutes
+);
+
+app.use(
+  "/api/v1/api-logs",
+  ApiLogRoutes
+);
+
+app.use(
+  "/api/v1/audit-logs",
+  auditLogRoutes
+);
+
+app.use(
+  "/api/v1/reports",
+  reportRoutes
+);
+
+app.use(
+  "/api/v1/client",
+  clientApiRoutes
+);
+
+app.use(
+  "/api/v1/clients",
+  clientRoutes
+);
 
 /* Health Check */
 app.get("/", (req, res) => {
@@ -91,5 +155,8 @@ app.use(errorHandler);
 const PORT = process.env.PORT || 5000;
 
 app.listen(PORT, () => {
-  console.log("Server running on port", PORT);
+  console.log(
+    "Server running on port",
+    PORT
+  );
 });

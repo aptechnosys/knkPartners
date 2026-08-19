@@ -10,12 +10,7 @@ module.exports = (req, res, next) => {
   const validStatus = [
     "NEW",
     "IN_PROGRESS",
-    "Q_CHECK",
-    "DONE",
-    "INSUFFICIENT",
-    "ON_HOLD",
-    "STOPPED",
-    "REJECTED",
+    "COMPLETED",
   ];
 
   if (!Array.isArray(comp_ref_nos) || comp_ref_nos.length === 0) {

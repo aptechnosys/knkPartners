@@ -1,16 +1,11 @@
 module.exports = (req, res, next) => {
   const { check_status } = req.body;
 
-  const validStatus = [
-    "NEW",
-    "IN_PROGRESS",
-    "Q_CHECK",
-    "DONE",
-    "INSUFFICIENT",
-    "ON_HOLD",
-    "STOPPED",
-    "REJECTED",
-  ];
+      const validStatus = [
+        "NEW",
+        "IN_PROGRESS",
+        "COMPLETED",
+      ];
 
   if (!check_status) {
     const error = new Error("Status is required");

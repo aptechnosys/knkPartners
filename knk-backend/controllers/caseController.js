@@ -3,6 +3,7 @@ const fs = require("fs");
 const path = require("path");
 const createAuditLog = require("../utils/auditLogger");
 const sendWebhook = require("../utils/sendWebhook");
+const sendProofWebhook = require("../utils/sendProofWebhook");
 const {
   readExcelFile,
   extractZip,
@@ -324,7 +325,6 @@ exports.assignCase = async (req, res, next) => {
 // DASHBOARD STATS
 exports.getDashboardStats = async (req, res, next) => {
   try {
-
     let filter = {};
 
     // Agent → only assigned cases
@@ -333,113 +333,59 @@ exports.getDashboardStats = async (req, res, next) => {
     }
 
     // Fetch all visible cases
-    const allCases =
-      await Case.find(filter);
+    const allCases = await Case.find(filter);
 
     // OVERDUE CALCULATION
-    const overdueCases =
-      allCases.filter((c) => {
+    const overdueCases = allCases.filter((c) => {
+      // Must have TAT
+      if (!c.tat) {
+        return false;
+      }
 
-        // must have TAT
-        if (!c.tat)
-          return false;
+      const status = (c.check_status || "").toUpperCase();
 
-        const status =
-          (c.check_status || "")
-            .toUpperCase();
+      // COMPLETED cases are final/closed
+      if (status === "COMPLETED") {
+        return false;
+      }
 
-        // ignore final/closed cases
-        if (
-          [
-            "DONE",
-            "REJECTED",
-            "STOPPED",
-            "INSUFFICIENT"
-          ].includes(status)
-        ) {
-          return false;
-        }
+      const deadline = new Date(c.createdAt);
 
-        const deadline =
-          new Date(c.createdAt);
+      deadline.setDate(
+        deadline.getDate() + Number(c.tat)
+      );
 
-        deadline.setDate(
-          deadline.getDate() +
-          Number(c.tat)
-        );
+      return deadline < new Date();
+    }).length;
 
-        return (
-          deadline <
-          new Date()
-        );
+    // TOTAL CASES
+    const totalCases = await Case.countDocuments(filter);
 
-      }).length;
+    // NEW CASES
+    const newCases = await Case.countDocuments({
+      ...filter,
+      check_status: "NEW",
+    });
 
-    const totalCases =
-      await Case.countDocuments(filter);
+    // PENDING / ACTIVE CASES
+    const pendingCases = await Case.countDocuments({
+      ...filter,
+      check_status: {
+        $in: ["NEW", "IN_PROGRESS"],
+      },
+    });
 
-    // Bell icon / NEW cases
-    const newCases =
-      await Case.countDocuments({
-        ...filter,
-        check_status: "NEW"
-      });
+    // IN PROGRESS / WIP
+    const inProgressCases = await Case.countDocuments({
+      ...filter,
+      check_status: "IN_PROGRESS",
+    });
 
-    // Active / unfinished cases
-    const pendingCases =
-      await Case.countDocuments({
-        ...filter,
-        check_status: {
-          $nin: [
-            "DONE",
-            "REJECTED",
-            "STOPPED",
-            "INSUFFICIENT"
-          ]
-        }
-      });
-
-    const inProgressCases =
-      await Case.countDocuments({
-        ...filter,
-        check_status: "IN_PROGRESS"
-      });
-
-    const qCheckCases =
-      await Case.countDocuments({
-        ...filter,
-        check_status: "Q_CHECK"
-      });
-
-    const doneCases =
-      await Case.countDocuments({
-        ...filter,
-        check_status: "DONE"
-      });
-
-    const insufficientCases =
-      await Case.countDocuments({
-        ...filter,
-        check_status: "INSUFFICIENT"
-      });
-
-    const onHoldCases =
-      await Case.countDocuments({
-        ...filter,
-        check_status: "ON_HOLD"
-      });
-
-    const stoppedCases =
-      await Case.countDocuments({
-        ...filter,
-        check_status: "STOPPED"
-      });
-
-    const rejectedCases =
-      await Case.countDocuments({
-        ...filter,
-        check_status: "REJECTED"
-      });
+    // COMPLETED
+    const completedCases = await Case.countDocuments({
+      ...filter,
+      check_status: "COMPLETED",
+    });
 
     res.status(200).json({
       success: true,
@@ -449,13 +395,8 @@ exports.getDashboardStats = async (req, res, next) => {
         overdueCases,
         newCases,
         inProgressCases,
-        qCheckCases,
-        doneCases,
-        insufficientCases,
-        onHoldCases,
-        stoppedCases,
-        rejectedCases
-      }
+        completedCases,
+      },
     });
 
   } catch (error) {
@@ -681,50 +622,45 @@ async (req, res, next) => {
   }
 };
 
-exports.uploadProofDocument =
-  async (req, res, next) => {
+// upload proof document 
+exports.uploadProofDocument = async (req, res, next) => {
+  try {
+    const caseItem = await Case.findById(req.params.id);
 
-    try {
-
-      const caseItem =
-        await Case.findById(
-          req.params.id
-        );
-
-      if (!caseItem) {
-        return res.status(404).json({
-          success: false,
-          message: "Case not found",
-        });
-      }
-
-      if (!req.file) {
-        return res.status(400).json({
-          success: false,
-          message: "No file uploaded",
-        });
-      }
-
-      caseItem.proof_document =
-        `/uploads/proofs/${req.file.filename}`;
-
-      await caseItem.save();
-
-      res.status(200).json({
-        success: true,
-        message:
-          "Proof uploaded successfully",
-        proof_document:
-          caseItem.proof_document,
+    if (!caseItem) {
+      return res.status(404).json({
+        success: false,
+        message: "Case not found",
       });
-
-    } catch (error) {
-      next(error);
     }
-  };
 
+    if (!req.file) {
+      return res.status(400).json({
+        success: false,
+        message: "No file uploaded",
+      });
+    }
 
-  // To Archive cases
+    // Save proof document path
+    caseItem.proof_document =
+      `/uploads/proofs/${req.file.filename}`;
+
+    await caseItem.save();
+
+    // Send proof update webhook to client
+    await sendProofWebhook(caseItem);
+
+    res.status(200).json({
+      success: true,
+      message: "Proof uploaded successfully",
+      proof_document: caseItem.proof_document,
+    });
+
+  } catch (error) {
+    next(error);
+  }
+};
+
 
   // ARCHIVE CASE
 exports.archiveCase = async (req, res) => {
@@ -802,46 +738,47 @@ exports.archiveCase = async (req, res) => {
 // restore archive cases
 exports.restoreCase = async (req, res) => {
   try {
+    const caseItem = await Case.findById(req.params.id);
 
-    const updatedCase =
-      await Case.findByIdAndUpdate(
-        req.params.id,
-        {
-          isArchived: false,
-          archivedAt: null,
-          archivedBy: null,
-        },
-        {
-          new: true,
-        }
-      );
-
-    if (!updatedCase) {
+    if (!caseItem) {
       return res.status(404).json({
         success: false,
         message: "Case not found",
       });
     }
 
-    res.status(200).json({
+    if (!caseItem.isArchived) {
+      return res.status(400).json({
+        success: false,
+        message: "Case is not archived",
+      });
+    }
+
+    caseItem.isArchived = false;
+    caseItem.archivedAt = null;
+    caseItem.archivedBy = null;
+
+    await caseItem.save();
+
+    return res.status(200).json({
       success: true,
       message: "Case restored successfully",
-      data: updatedCase,
+      data: caseItem,
     });
 
   } catch (error) {
+    console.error("RESTORE CASE ERROR:", error);
 
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: error.message,
     });
-
   }
 };
 
 
 
-// Multiple select 
+// Multiple select delete
 exports.bulkDeleteCases = async (
   req,
   res
@@ -944,10 +881,17 @@ exports.bulkUpdateStatus = async (req, res, next) => {
   }
 };
 
-// Bulk Upload (Excel + ZIP)
+
+// BULK UPLOAD (EXCEL + ZIP)
+// Maximum 100 Cases
+
+
 exports.bulkUploadCases = async (req, res, next) => {
   try {
-    // Check uploaded files
+    
+    // 1. CHECK FILES
+    
+
     if (!req.files?.excel || !req.files?.zip) {
       return res.status(400).json({
         success: false,
@@ -955,262 +899,437 @@ exports.bulkUploadCases = async (req, res, next) => {
       });
     }
 
-    // Uploaded file paths
     const excelPath = req.files.excel[0].path;
     const zipPath = req.files.zip[0].path;
 
-    // Read Excel
+    // ============================================
+    // 2. READ EXCEL
+    // ============================================
+
     const excelData = readExcelFile(excelPath);
 
-    
+    if (!excelData || !Array.isArray(excelData)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid Excel file.",
+      });
+    }
 
-    // Validate Excel
+    // ============================================
+    // 3. MAXIMUM 100 CASES
+    // ============================================
+
+    if (excelData.length > 100) {
+      return res.status(400).json({
+        success: false,
+        message: "Maximum 100 cases can be uploaded at once.",
+        totalRows: excelData.length,
+        maxAllowed: 100,
+      });
+    }
+
+    if (excelData.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Excel file contains no records.",
+      });
+    }
+
+    // ============================================
+    // 4. VALIDATE EXCEL
+    // ============================================
+
     validateExcelData(excelData);
 
-    
+    // ============================================
+    // 5. EXTRACT ZIP
+    // ============================================
 
-    // Extract ZIP
     const proofFolder = extractZip(zipPath);
 
-    // Read all extracted proof files
+    if (!fs.existsSync(proofFolder)) {
+      return res.status(400).json({
+        success: false,
+        message: "Failed to extract proof ZIP.",
+      });
+    }
+
+    // ============================================
+    // 6. READ PROOF FILES
+    // ============================================
+
     const proofFiles = fs.readdirSync(proofFolder);
 
     const matchedCases = [];
     const errors = [];
 
+    // ============================================
+    // 7. MATCH EXCEL WITH ZIP
+    // ============================================
+
     for (const row of excelData) {
+      const referenceNo = String(
+        row["Reference No"] || ""
+      ).trim();
 
-      // Match proof file by filename (without extension)
-      const matchedFile = proofFiles.find(
-        (file) =>
-          path.parse(file).name.trim() ===
-          String(row["File Name"]).trim()
-      );
+      const fileName = String(
+        row["File Name"] || ""
+      ).trim();
 
-      if (!matchedFile) {
+      if (!referenceNo) {
         errors.push(
-          `Proof file not found for Reference No ${row["Reference No"]} (Expected: ${row["File Name"]})`
+          "Reference No is missing in Excel."
         );
         continue;
       }
 
-      // Find Case in Database
+      if (!fileName) {
+        errors.push(
+          `File Name is missing for ${referenceNo}.`
+        );
+        continue;
+      }
+
+      // Match filename without extension
+      const matchedFile = proofFiles.find(
+        (file) =>
+          path.parse(file).name.trim() ===
+          fileName
+      );
+
+      if (!matchedFile) {
+        errors.push(
+          `Proof file not found for ${referenceNo} (Expected: ${fileName})`
+        );
+        continue;
+      }
+
+      // ============================================
+      // 8. FIND CASE
+      // ============================================
+
       const caseItem = await Case.findOne({
-        comp_ref_no: row["Reference No"],
+        comp_ref_no: referenceNo,
       });
 
       if (!caseItem) {
         errors.push(
-          `Case not found for Reference No ${row["Reference No"]}`
+          `Case not found for Reference No ${referenceNo}`
+        );
+        continue;
+      }
+
+      // ============================================
+      // 9. PREVENT DUPLICATE COMPLETED CASE
+      // ============================================
+
+      if (
+        String(caseItem.check_status)
+          .toUpperCase() === "COMPLETED"
+      ) {
+        errors.push(
+          `${referenceNo} is already completed.`
         );
         continue;
       }
 
       matchedCases.push({
-        referenceNo: row["Reference No"],
+        referenceNo,
         dbCaseId: caseItem._id,
         proofFile: matchedFile,
-        verifyStatus: row["Verify Status"],
-        colourCode: row["Colour Code"],
-        verificationDate: row["Verification Date"],
+
+        verifyStatus: String(
+          row["Verify Status"] || ""
+        ).trim(),
+
+        colourCode: String(
+          row["Colour Code"] || ""
+        ).trim(),
+
+        verificationDate:
+          row["Verification Date"],
       });
 
       console.log(
-        `✅ ${row["Reference No"]} -> ${matchedFile}`
+        `✅ Matched ${referenceNo} -> ${matchedFile}`
       );
     }
-     
-//     for (const item of matchedCases) {
-//   const caseItem = await Case.findById(item.dbCaseId);
 
-//   if (!caseItem) continue;
+    // ============================================
+    // 10. UPDATE CASES
+    // ============================================
 
-//   // Proof Path
-//   caseItem.proof_document = `/uploads/proofs/${item.proofFile}`;
+    let updatedCount = 0;
 
-//   // Verification Date
-//   caseItem.verified_date = new Date(item.verificationDate);
+    for (const item of matchedCases) {
+      const caseItem = await Case.findById(
+        item.dbCaseId
+      );
 
-//   // Verification Result
-//   caseItem.verification_result = item.verifyStatus;
+      if (!caseItem) {
+        errors.push(
+          `Case ${item.referenceNo} no longer exists.`
+        );
+        continue;
+      }
 
-//   // Status
-//   caseItem.check_status =
-//     item.verifyStatus === "Completed"
-//       ? "DONE"
-//       : "STOPPED";
+      // ============================================
+      // VERIFY STATUS
+      // ============================================
 
-//   // Optional colour code
-//   caseItem.colour_code = item.colourCode;
+      const verifyStatus =
+        item.verifyStatus.toLowerCase();
 
-//   // Who verified
-//   caseItem.verified_by = req.user._id;
+      if (verifyStatus !== "completed") {
+        errors.push(
+          `${item.referenceNo}: Verify Status must be Completed.`
+        );
+        continue;
+      }
 
-//   await caseItem.save();
+      // ============================================
+      // 11. COPY PROOF INTO PERMANENT PROOF FOLDER
+      // ============================================
 
-//   await sendWebhook(caseItem);
+      const sourcePath = path.join(
+        proofFolder,
+        item.proofFile
+      );
 
-//   await createAuditLog({
-//     userId: req.user.id,
-//     action: "BULK_UPLOAD_COMPLETED",
-//     caseId: caseItem._id,
-//     details: `Bulk upload updated case ${caseItem.comp_ref_no}`,
-//     module: "CASE",
-//   });
-// }
+      const proofsDirectory = path.resolve(
+        __dirname,
+        "../uploads/proofs"
+      );
 
-let updatedCount = 0;
+      if (!fs.existsSync(proofsDirectory)) {
+        fs.mkdirSync(proofsDirectory, {
+          recursive: true,
+        });
+      }
 
-for (const item of matchedCases) {
-  const caseItem = await Case.findById(item.dbCaseId);
+      // Generate unique filename
+      const uniqueFileName =
+        `${Date.now()}-${Math.round(
+          Math.random() * 1e9
+        )}${path.extname(item.proofFile)}`;
 
-  if (!caseItem) continue;
+      const destinationPath = path.join(
+        proofsDirectory,
+        uniqueFileName
+      );
 
-  // Prevent duplicate verification
-  if (caseItem.check_status === "DONE") {
-    errors.push(`${caseItem.comp_ref_no} is already verified.`);
-    continue;
-  }
+      // Copy ZIP proof to permanent folder
+      fs.copyFileSync(
+        sourcePath,
+        destinationPath
+      );
 
-  // Proof document
-  caseItem.proof_document = `/uploads/proofs/${item.proofFile}`;
+      // ============================================
+      // 12. SAVE PROOF PATH
+      // ============================================
 
-  // Verification Date
-  caseItem.verified_date = excelDateToJSDate(
-    item.verificationDate
-  );
+      caseItem.proof_document =
+        `/uploads/proofs/${uniqueFileName}`;
 
-  // Verification Result
-  const colourMap = {
-    green: "GREEN",
-    red: "RED",
-    orange: "ORANGE",
-    insufficient: "INSUFFICIENT",
-  };
+      // ============================================
+      // 13. VERIFICATION RESULT
+      // ============================================
 
-  caseItem.verification_result =
-    colourMap[
-      String(item.colourCode || "").toLowerCase()
-    ] || null;
+      const colourMap = {
+        green: "GREEN",
+        red: "RED",
+        orange: "ORANGE",
+        insufficient: "INSUFFICIENT",
+      };
 
-  // Verified By
-  caseItem.verified_by = req.user._id;
+      caseItem.verification_result =
+        colourMap[
+          item.colourCode.toLowerCase()
+        ] || null;
 
-  // Status Mapping
-  caseItem.check_status =
-    String(item.verifyStatus).toLowerCase() === "completed"
-      ? "DONE"
-      : "STOPPED";
+      // ============================================
+      // 14. VERIFICATION DATE
+      // ============================================
 
-  // Old records may not have user
-  if (!caseItem.user) {
-    caseItem.user = req.user._id;
-  }
+      if (item.verificationDate) {
+        caseItem.verified_date =
+          excelDateToJSDate(
+            item.verificationDate
+          );
+      } else {
+        caseItem.verified_date = new Date();
+      }
 
-  // Save
-  await caseItem.save();
+      // ============================================
+      // 15. VERIFIED BY
+      // ============================================
 
-  updatedCount++;
+      caseItem.verified_by =
+        req.user._id;
 
-  // Webhook
-  try {
-    await sendWebhook(caseItem);
-  } catch (err) {
-    console.log(
-      "Webhook Failed:",
-      err.message
-    );
-  }
+      // ============================================
+      // 16. STATUS
+      // ============================================
 
-  // Audit Log
-  try {
-    await createAuditLog({
-      userId: req.user.id,
-      action: "BULK_UPLOAD",
-      caseId: caseItem._id,
-      details: `Bulk Upload Completed`,
-      module: "CASE",
-    });
-  } catch (err) {
-    console.log(
-      "Audit Failed:",
-      err.message
-    );
-  }
-}
+      caseItem.check_status =
+        "COMPLETED";
 
-// ===============================
-// Cleanup uploaded Excel & ZIP
-// ===============================
-try {
-  if (fs.existsSync(excelPath)) {
-    fs.unlinkSync(excelPath);
-  }
+      // ============================================
+      // 17. OLD RECORD SAFETY
+      // ============================================
 
-  if (fs.existsSync(zipPath)) {
-    fs.unlinkSync(zipPath);
-  }
-} catch (err) {
-  console.log(
-    "File cleanup failed:",
-    err.message
-  );
-}
+      if (!caseItem.user) {
+        caseItem.user = req.user._id;
+      }
 
-// ===============================
-// Cleanup extracted proof files
-// ===============================
-try {
-  const extractedFiles =
-    fs.readdirSync(proofFolder);
+      // ============================================
+      // 18. SAVE CASE
+      // ============================================
 
-  for (const file of extractedFiles) {
-    const filePath =
-      path.join(proofFolder, file);
+      await caseItem.save();
 
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
+      updatedCount++;
+
+      // ============================================
+      // 19. PROOF WEBHOOK
+      // ============================================
+
+      try {
+        await sendProofWebhook(caseItem);
+
+        console.log(
+          `📤 Proof webhook sent -> ${item.referenceNo}`
+        );
+      } catch (webhookError) {
+        console.error(
+          `Proof webhook failed -> ${item.referenceNo}:`,
+          webhookError.message
+        );
+      }
+
+      // ============================================
+      // 20. AUDIT LOG
+      // ============================================
+
+      try {
+        await createAuditLog({
+          userId: req.user.id,
+
+          action: "BULK_PROOF_UPLOAD",
+
+          caseId: caseItem._id,
+
+          details:
+            `Proof uploaded through bulk upload for ${caseItem.comp_ref_no}`,
+
+          module: "CASE",
+        });
+      } catch (auditError) {
+        console.error(
+          "Audit log failed:",
+          auditError.message
+        );
+      }
     }
+
+    // ============================================
+    // 21. CLEANUP EXCEL + ZIP
+    // ============================================
+
+    try {
+      if (fs.existsSync(excelPath)) {
+        fs.unlinkSync(excelPath);
+      }
+
+      if (fs.existsSync(zipPath)) {
+        fs.unlinkSync(zipPath);
+      }
+    } catch (cleanupError) {
+      console.error(
+        "Excel/ZIP cleanup failed:",
+        cleanupError.message
+      );
+    }
+
+    // ============================================
+    // 22. CLEANUP EXTRACTED FILES
+    // ============================================
+
+    try {
+      const extractedFiles =
+        fs.readdirSync(proofFolder);
+
+      for (const file of extractedFiles) {
+        const filePath =
+          path.join(
+            proofFolder,
+            file
+          );
+
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      }
+
+      // Remove extraction folder
+      if (fs.existsSync(proofFolder)) {
+        fs.rmdirSync(proofFolder);
+      }
+    } catch (cleanupError) {
+      console.error(
+        "Proof cleanup failed:",
+        cleanupError.message
+      );
+    }
+
+    // ============================================
+    // 23. FINAL RESPONSE
+    // ============================================
+
+    return res.status(200).json({
+      success: errors.length === 0,
+
+      message:
+        errors.length === 0
+          ? `${updatedCount} proofs uploaded successfully.`
+          : "Bulk proof upload completed with some errors.",
+
+      summary: {
+        totalRows: excelData.length,
+
+        matched: matchedCases.length,
+
+        updated: updatedCount,
+
+        failed: errors.length,
+      },
+
+      updatedCases: matchedCases.map(
+        (item) => ({
+          referenceNo:
+            item.referenceNo,
+
+          status: "COMPLETED",
+
+          proofFile:
+            item.proofFile,
+
+          colourCode:
+            item.colourCode,
+
+          verificationDate:
+            item.verificationDate,
+        })
+      ),
+
+      errors,
+    });
+  } catch (error) {
+    console.error(
+      "BULK PROOF UPLOAD ERROR:",
+      error
+    );
+
+    next(error);
   }
-} catch (err) {
-  console.log(
-    "Proof cleanup failed:",
-    err.message
-  );
-}
-
-// ===============================
-// Final Response
-// ===============================
-return res.status(200).json({
-  success: errors.length === 0,
-  message:
-    errors.length === 0
-      ? `${updatedCount} cases updated successfully.`
-      : "Bulk upload completed with some errors.",
-
-  summary: {
-    totalRows: excelData.length,
-    matched: matchedCases.length,
-    updated: updatedCount,
-    failed: errors.length,
-  },
-
-  updatedCases: matchedCases.map((item) => ({
-    referenceNo: item.referenceNo,
-    status:
-      String(item.verifyStatus).toLowerCase() ===
-      "completed"
-        ? "DONE"
-        : "STOPPED",
-    proofFile: item.proofFile,
-    colourCode: item.colourCode,
-    verificationDate: item.verificationDate,
-  })),
-
-  errors,
-});
-} catch (error) {
-  next(error);
-}
 };

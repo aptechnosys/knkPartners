@@ -9,7 +9,6 @@ import {
   MdSync,
   MdCheckCircle,
   MdWarning,
-  MdErrorOutline,
   MdDownload,
 } from "react-icons/md";
 
@@ -53,48 +52,46 @@ function ReportCard({
 }
 
 export default function Reports() {
-  const [stats, setStats] =
-    useState(null);
+  const [stats, setStats] = useState(null);
 
-  const [loading, setLoading] =
-    useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchReports =
-      async () => {
-        try {
-          const res =
-            await API.get(
-              "/reports/summary"
-            );
+    const fetchReports = async () => {
+      try {
+        const res = await API.get(
+          "/reports/summary"
+        );
 
-          setStats(
-            res.data.data
-          );
-        } catch (err) {
-          console.log(err);
-        } finally {
-          setLoading(false);
-        }
-      };
+        setStats(res.data.data);
+      } catch (err) {
+        console.log(err);
+      } finally {
+        setLoading(false);
+      }
+    };
 
     fetchReports();
   }, []);
 
- 
-      const handleExportExcel = async () => {
-        try {
-          const res = await API.get(
+  // ===============================
+  // EXPORT EXCEL
+  // ===============================
+
+  const handleExportExcel = async () => {
+    try {
+      const res = await API.get(
         "/cases?page=1&limit=1000"
       );
 
-          const cases = res.data.data || [];
+      const cases = res.data.data || [];
 
-          if (cases.length > 0) {
-            console.log("FIRST CASE:", cases[0]);
-          }
+      if (!cases.length) {
+        console.log("No cases available for export.");
+        return;
+      }
 
-        const exportData = cases.map((item) => ({
+      const exportData = cases.map((item) => ({
         "Reference No":
           item.comp_ref_no || "-",
 
@@ -139,48 +136,67 @@ export default function Reports() {
               ).toLocaleString()
             : "-",
       }));
-    const worksheet =
-      XLSX.utils.json_to_sheet(exportData);
 
-      const colWidths = Object.keys(exportData[0]).map((key) => ({
-        wch: Math.max(
-          key.length,
-          ...exportData.map((row) =>
-            String(row[key] || "").length
-          )
-        ) + 5,
+      const worksheet =
+        XLSX.utils.json_to_sheet(
+          exportData
+        );
+
+      // Column widths
+      const colWidths = Object.keys(
+        exportData[0]
+      ).map((key) => ({
+        wch:
+          Math.max(
+            key.length,
+            ...exportData.map((row) =>
+              String(
+                row[key] || ""
+              ).length
+            )
+          ) + 5,
       }));
 
-      worksheet["!cols"] = colWidths;
+      worksheet["!cols"] =
+        colWidths;
 
-    const workbook =
-      XLSX.utils.book_new();
+      const workbook =
+        XLSX.utils.book_new();
 
-    XLSX.utils.book_append_sheet(
-      workbook,
-      worksheet,
-      "Cases Report"
-    );
+      XLSX.utils.book_append_sheet(
+        workbook,
+        worksheet,
+        "Cases Report"
+      );
 
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array",
-    });
+      const excelBuffer =
+        XLSX.write(workbook, {
+          bookType: "xlsx",
+          type: "array",
+        });
 
-    const fileData = new Blob([excelBuffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
-    });
+      const fileData = new Blob(
+        [excelBuffer],
+        {
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+        }
+      );
 
-    saveAs(
-      fileData,
-      `KNK_Report_${Date.now()}.xlsx`
-    );
-  } catch (err) {
-    console.log(err);
-  }
-};
+      saveAs(
+        fileData,
+        `KNK_Report_${Date.now()}.xlsx`
+      );
+    } catch (err) {
+      console.log(
+        "Excel export error:",
+        err
+      );
+    }
+  };
 
-
+  // ===============================
+  // LOADING
+  // ===============================
 
   if (loading) {
     return (
@@ -196,6 +212,10 @@ export default function Reports() {
     );
   }
 
+  // ===============================
+  // CHART DATA
+  // ===============================
+
   const chartData = [
     {
       name: "New",
@@ -204,6 +224,7 @@ export default function Reports() {
           stats?.newCases
         ) || 0,
     },
+
     {
       name: "In Progress",
       value:
@@ -211,20 +232,15 @@ export default function Reports() {
           stats?.inProgressCases
         ) || 0,
     },
+
     {
-      name: "Done",
+      name: "Completed",
       value:
         Number(
-          stats?.doneCases
+          stats?.completedCases
         ) || 0,
     },
-    {
-      name: "Insufficient",
-      value:
-        Number(
-          stats?.insufficientCases
-        ) || 0,
-    },
+
     {
       name: "Overdue",
       value:
@@ -234,6 +250,10 @@ export default function Reports() {
     },
   ];
 
+  // ===============================
+  // UI
+  // ===============================
+
   return (
     <DashboardLayout
       title="Reports"
@@ -242,27 +262,34 @@ export default function Reports() {
         "Reports",
       ]}
     >
-      {/* CARDS */}
+      {/* =========================
+          REPORT CARDS
+      ========================== */}
+
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* TOTAL */}
+
         <ReportCard
           title="Total Cases"
           value={
-            stats?.totalCases ||
-            0
+            stats?.totalCases || 0
           }
           icon={MdFolder}
           iconBg="bg-blue-50 text-blue-600"
         />
 
+        {/* NEW */}
+
         <ReportCard
           title="New Cases"
           value={
-            stats?.newCases ||
-            0
+            stats?.newCases || 0
           }
           icon={MdInbox}
           iconBg="bg-slate-100 text-slate-600"
         />
+
+        {/* IN PROGRESS */}
 
         <ReportCard
           title="In Progress"
@@ -274,42 +301,34 @@ export default function Reports() {
           iconBg="bg-indigo-50 text-indigo-600"
         />
 
+        {/* COMPLETED */}
+
         <ReportCard
-          title="Done"
+          title="Completed"
           value={
-            stats?.doneCases ||
+            stats?.completedCases ||
             0
           }
-          icon={
-            MdCheckCircle
-          }
+          icon={MdCheckCircle}
           iconBg="bg-green-50 text-green-600"
         />
 
-        <ReportCard
-          title="Insufficient"
-          value={
-            stats?.insufficientCases ||
-            0
-          }
-          icon={
-            MdErrorOutline
-          }
-          iconBg="bg-orange-50 text-orange-600"
-        />
+        {/* OVERDUE */}
 
         <ReportCard
           title="Overdue"
           value={
-            stats?.overdueCases ||
-            0
+            stats?.overdueCases || 0
           }
           icon={MdWarning}
           iconBg="bg-red-50 text-red-600"
         />
       </div>
 
-      {/* EXPORT BUTTON */}
+      {/* =========================
+          EXPORT BUTTON
+      ========================== */}
+
       <div className="mt-6 flex justify-end">
         <button
           onClick={
@@ -318,11 +337,15 @@ export default function Reports() {
           className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-sm transition"
         >
           <MdDownload />
+
           Export Excel
         </button>
       </div>
 
-      {/* BAR CHART */}
+      {/* =========================
+          BAR CHART
+      ========================== */}
+
       <div className="mt-6 bg-white rounded-xl border border-slate-100 p-6 shadow-sm">
         <h2 className="text-lg font-semibold text-slate-800 mb-6">
           Case Distribution
@@ -340,9 +363,13 @@ export default function Reports() {
               bottom: 5,
             }}
           >
-            <CartesianGrid strokeDasharray="3 3" />
+            <CartesianGrid
+              strokeDasharray="3 3"
+            />
 
-            <XAxis dataKey="name" />
+            <XAxis
+              dataKey="name"
+            />
 
             <YAxis />
 

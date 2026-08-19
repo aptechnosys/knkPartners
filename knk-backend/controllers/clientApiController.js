@@ -1,4 +1,6 @@
 const Case = require("../models/Case");
+const fs = require("fs");
+const path = require("path");
 
 const getCaseStatus = async (req, res) => {
   try {
@@ -130,8 +132,76 @@ const getVendorCasesStatus = async (req, res) => {
   }
 };
 
+// DOWNLOAD PROOF DOCUMENT
+const downloadProofDocument = async (req, res, next) => {
+  try {
+    const { applicationId } = req.params;
+
+    // Find case belonging to the authenticated vendor
+    const caseItem = await Case.findOne({
+      comp_ref_no: applicationId,
+      vendor: req.vendor,
+    });
+
+    if (!caseItem) {
+      return res.status(404).json({
+        success: false,
+        message: "Case not found",
+      });
+    }
+
+    // Check proof exists
+    if (!caseItem.proof_document) {
+      return res.status(404).json({
+        success: false,
+        message: "Proof document not found",
+      });
+    }
+
+    // Convert stored path into absolute server path
+    const filePath = path.resolve(
+      __dirname,
+      "..",
+      caseItem.proof_document.replace(/^\/+/, "")
+    );
+
+    // Check file exists on server
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        success: false,
+        message: "Proof file not found on server",
+      });
+    }
+
+    // Download file
+    return res.download(
+      filePath,
+      path.basename(filePath),
+      (error) => {
+        if (error) {
+          console.error(
+            "Proof download error:",
+            error
+          );
+
+          if (!res.headersSent) {
+            return res.status(500).json({
+              success: false,
+              message: "Failed to download proof",
+            });
+          }
+        }
+      }
+    );
+
+  } catch (error) {
+    next(error);
+  }
+};
+
 module.exports = {
   getCaseStatus,
   getBulkCaseStatus,
   getVendorCasesStatus,
+  downloadProofDocument,
 };
