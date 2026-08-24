@@ -24,7 +24,7 @@ const authLimiter = rateLimit({
 /* ADMIN DASHBOARD API*/
 const apiLimiter = rateLimit({
   windowMs: 1 * 60 * 1000, // 1 Minute
-  max: 100,
+  max: 500,
 
   standardHeaders: true,
   legacyHeaders: false,

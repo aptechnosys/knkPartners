@@ -1,7 +1,10 @@
 const Client = require("../models/Client");
 const crypto = require("crypto");
 
+// ============================================
 // GET ALL CLIENTS
+// ============================================
+
 const getClients = async (req, res) => {
   try {
     const clients = await Client.find().sort({
@@ -13,6 +16,8 @@ const getClients = async (req, res) => {
       clients,
     });
   } catch (error) {
+    console.error("Get Clients Error:", error);
+
     res.status(500).json({
       success: false,
       message: error.message,
@@ -20,7 +25,10 @@ const getClients = async (req, res) => {
   }
 };
 
+// ============================================
 // CREATE CLIENT
+// ============================================
+
 const createClient = async (req, res) => {
   try {
     const { vendorName, callbackUrl } = req.body;
@@ -57,12 +65,64 @@ const createClient = async (req, res) => {
       client,
     });
   } catch (error) {
+    console.error("Create Client Error:", error);
+
     res.status(500).json({
       success: false,
       message: error.message,
     });
   }
 };
+
+// ============================================
+// UPDATE CLIENT
+// ============================================
+
+const updateClient = async (req, res) => {
+  try {
+    const { callbackUrl } = req.body;
+
+    // Callback URL is required
+    if (callbackUrl === undefined) {
+      return res.status(400).json({
+        success: false,
+        message: "Callback URL is required",
+      });
+    }
+
+    // Find client
+    const client = await Client.findById(req.params.id);
+
+    if (!client) {
+      return res.status(404).json({
+        success: false,
+        message: "Client not found",
+      });
+    }
+
+    // Update callback URL only
+    client.callbackUrl = callbackUrl.trim();
+
+    await client.save();
+
+    res.status(200).json({
+      success: true,
+      message: "Client updated successfully",
+      client,
+    });
+  } catch (error) {
+    console.error("Update Client Error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Server error",
+    });
+  }
+};
+
+// ============================================
+// TOGGLE CLIENT STATUS
+// ============================================
 
 const toggleClientStatus = async (req, res) => {
   try {
@@ -84,7 +144,7 @@ const toggleClientStatus = async (req, res) => {
       client,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Toggle Client Status Error:", error);
 
     res.status(500).json({
       success: false,
@@ -93,9 +153,11 @@ const toggleClientStatus = async (req, res) => {
   }
 };
 
-// Regenate the Client API Key 
-const regenerateApiKey = async (req, res) => {
+// ============================================
+// REGENERATE CLIENT API KEY
+// ============================================
 
+const regenerateApiKey = async (req, res) => {
   try {
     const client = await Client.findById(req.params.id);
 
@@ -124,9 +186,8 @@ const regenerateApiKey = async (req, res) => {
       message: "API Key regenerated successfully",
       apiKey: newApiKey,
     });
-
   } catch (error) {
-    console.error(error);
+    console.error("Regenerate API Key Error:", error);
 
     res.status(500).json({
       success: false,
@@ -135,9 +196,14 @@ const regenerateApiKey = async (req, res) => {
   }
 };
 
+// ============================================
+// EXPORTS
+// ============================================
+
 module.exports = {
   getClients,
   createClient,
+  updateClient,
   toggleClientStatus,
   regenerateApiKey,
 };

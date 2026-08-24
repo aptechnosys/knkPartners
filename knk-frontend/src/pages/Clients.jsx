@@ -1,18 +1,53 @@
 import { useState, useEffect } from "react";
 import DashboardLayout from "../layouts/DashboardLayout";
-import { MdAdd } from "react-icons/md";
+import { MdAdd, MdEdit } from "react-icons/md";
 import API from "../api/axios";
 
 function Clients() {
+  // ============================================
+  // ADD CLIENT MODAL
+  // ============================================
+
   const [showModal, setShowModal] = useState(false);
 
+  // ============================================
+  // EDIT CLIENT MODAL
+  // ============================================
+
+  const [showEditModal, setShowEditModal] = useState(false);
+
+  const [editingClient, setEditingClient] = useState(null);
+
+  // ============================================
+  // CLIENT DATA
+  // ============================================
+
   const [clients, setClients] = useState([]);
+
+  // ============================================
+  // ADD CLIENT FORM
+  // ============================================
 
   const [vendorName, setVendorName] = useState("");
 
   const [callbackUrl, setCallbackUrl] = useState("");
 
+  // ============================================
+  // EDIT CLIENT FORM
+  // ============================================
+
+  const [editCallbackUrl, setEditCallbackUrl] =
+    useState("");
+
+  // ============================================
+  // LOADING
+  // ============================================
+
   const [loading, setLoading] = useState(false);
+
+  // ============================================
+  // FETCH CLIENTS
+  // ============================================
 
   const fetchClients = async () => {
     try {
@@ -27,6 +62,10 @@ function Clients() {
   useEffect(() => {
     fetchClients();
   }, []);
+
+  // ============================================
+  // CREATE CLIENT
+  // ============================================
 
   const saveClient = async () => {
     try {
@@ -61,7 +100,64 @@ function Clients() {
     }
   };
 
-  // Enable / Disable Client
+  // ============================================
+  // OPEN EDIT MODAL
+  // ============================================
+
+  const openEditModal = (client) => {
+    setEditingClient(client);
+
+    setEditCallbackUrl(
+      client.callbackUrl || ""
+    );
+
+    setShowEditModal(true);
+  };
+
+  // ============================================
+  // UPDATE CLIENT
+  // ============================================
+
+  const updateClient = async () => {
+    try {
+      if (!editingClient) {
+        return;
+      }
+
+      setLoading(true);
+
+      await API.put(
+        `/clients/${editingClient._id}`,
+        {
+          callbackUrl: editCallbackUrl.trim(),
+        }
+      );
+
+      setShowEditModal(false);
+
+      setEditingClient(null);
+
+      setEditCallbackUrl("");
+
+      await fetchClients();
+
+      alert("Client updated successfully");
+    } catch (error) {
+      console.error(error);
+
+      alert(
+        error?.response?.data?.message ||
+          "Failed to update client"
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ============================================
+  // ENABLE / DISABLE CLIENT
+  // ============================================
+
   const toggleStatus = async (id) => {
     try {
       await API.patch(
@@ -79,16 +175,19 @@ function Clients() {
     }
   };
 
-  // Regenerate API Key
-  const regenerateKey = async (id) => {
+  // ============================================
+  // REGENERATE API KEY
+  // ============================================
 
-     if (
-  !window.confirm(
-    "Regenerate API Key? Old key will stop working immediately."
-  )
-) {
-  return;
-}
+  const regenerateKey = async (id) => {
+    if (
+      !window.confirm(
+        "Regenerate API Key? Old key will stop working immediately."
+      )
+    ) {
+      return;
+    }
+
     try {
       const { data } = await API.patch(
         `/clients/${id}/regenerate-key`
@@ -112,7 +211,11 @@ function Clients() {
   return (
     <DashboardLayout>
       <div className="p-6">
-        {/* Header */}
+
+        {/* ========================================
+            HEADER
+        ======================================== */}
+
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl font-bold text-slate-800">
@@ -133,7 +236,10 @@ function Clients() {
           </button>
         </div>
 
-        {/* Table */}
+        {/* ========================================
+            TABLE
+        ======================================== */}
+
         <div className="bg-white rounded-xl border overflow-hidden">
           <table className="w-full">
             <thead className="bg-slate-50">
@@ -176,14 +282,17 @@ function Clients() {
                     key={client._id}
                     className="border-t"
                   >
+                    {/* Vendor Name */}
                     <td className="p-4">
                       {client.vendorName}
                     </td>
 
+                    {/* API Key */}
                     <td className="p-4 font-mono text-sm break-all">
                       {client.apiKey}
                     </td>
 
+                    {/* Status */}
                     <td className="p-4">
                       <span
                         className={`px-2 py-1 rounded text-xs ${
@@ -198,12 +307,27 @@ function Clients() {
                       </span>
                     </td>
 
-                    <td className="p-4">
+                    {/* Callback URL */}
+                    <td className="p-4 break-all">
                       {client.callbackUrl || "-"}
                     </td>
 
+                    {/* Actions */}
                     <td className="p-4">
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 flex-wrap">
+
+                        {/* EDIT */}
+                        <button
+                          onClick={() =>
+                            openEditModal(client)
+                          }
+                          className="flex items-center gap-1 px-3 py-1 rounded text-xs font-medium bg-yellow-100 text-yellow-700"
+                        >
+                          <MdEdit />
+                          Edit
+                        </button>
+
+                        {/* ENABLE / DISABLE */}
                         <button
                           onClick={() =>
                             toggleStatus(
@@ -221,6 +345,7 @@ function Clients() {
                             : "Enable"}
                         </button>
 
+                        {/* REGENERATE KEY */}
                         <button
                           onClick={() =>
                             regenerateKey(
@@ -231,6 +356,7 @@ function Clients() {
                         >
                           Regenerate Key
                         </button>
+
                       </div>
                     </td>
                   </tr>
@@ -240,15 +366,22 @@ function Clients() {
           </table>
         </div>
 
-        {/* Add Client Modal */}
+        {/* ========================================
+            ADD CLIENT MODAL
+        ======================================== */}
+
         {showModal && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
             <div className="bg-white rounded-xl p-6 w-[500px]">
+
               <h2 className="text-xl font-semibold mb-4">
                 Add Client
               </h2>
 
               <div className="space-y-4">
+
+                {/* Vendor Name */}
                 <input
                   type="text"
                   value={vendorName}
@@ -261,6 +394,7 @@ function Clients() {
                   className="w-full border rounded-lg p-3"
                 />
 
+                {/* Callback URL */}
                 <input
                   type="text"
                   value={callbackUrl}
@@ -277,9 +411,11 @@ function Clients() {
                   API Key will be generated
                   automatically.
                 </div>
+
               </div>
 
               <div className="flex justify-end gap-3 mt-6">
+
                 <button
                   onClick={() => {
                     setShowModal(false);
@@ -300,10 +436,114 @@ function Clients() {
                     ? "Saving..."
                     : "Save Client"}
                 </button>
+
               </div>
+
             </div>
           </div>
         )}
+
+        {/* ========================================
+            EDIT CLIENT MODAL
+        ======================================== */}
+
+        {showEditModal && editingClient && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+
+            <div className="bg-white rounded-xl p-6 w-[500px]">
+
+              <h2 className="text-xl font-semibold mb-4">
+                Edit Client
+              </h2>
+
+              <div className="space-y-4">
+
+                {/* Vendor Name - READ ONLY */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Vendor Name
+                  </label>
+
+                  <input
+                    type="text"
+                    value={
+                      editingClient.vendorName
+                    }
+                    disabled
+                    className="w-full border rounded-lg p-3 bg-slate-100 text-slate-500 cursor-not-allowed"
+                  />
+                </div>
+
+                {/* Callback URL */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    Callback URL
+                  </label>
+
+                  <input
+                    type="text"
+                    value={editCallbackUrl}
+                    onChange={(e) =>
+                      setEditCallbackUrl(
+                        e.target.value
+                      )
+                    }
+                    placeholder="Callback URL"
+                    className="w-full border rounded-lg p-3"
+                  />
+                </div>
+
+                {/* API Key */}
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">
+                    API Key
+                  </label>
+
+                  <input
+                    type="text"
+                    value={editingClient.apiKey}
+                    disabled
+                    className="w-full border rounded-lg p-3 bg-slate-100 text-slate-500 cursor-not-allowed font-mono text-sm"
+                  />
+
+                  <p className="text-xs text-slate-500 mt-1">
+                    Use "Regenerate Key" to create a
+                    new API key.
+                  </p>
+                </div>
+
+              </div>
+
+              {/* Buttons */}
+              <div className="flex justify-end gap-3 mt-6">
+
+                <button
+                  onClick={() => {
+                    setShowEditModal(false);
+                    setEditingClient(null);
+                    setEditCallbackUrl("");
+                  }}
+                  className="border px-4 py-2 rounded-lg"
+                >
+                  Cancel
+                </button>
+
+                <button
+                  onClick={updateClient}
+                  disabled={loading}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg"
+                >
+                  {loading
+                    ? "Updating..."
+                    : "Save Changes"}
+                </button>
+
+              </div>
+
+            </div>
+          </div>
+        )}
+
       </div>
     </DashboardLayout>
   );

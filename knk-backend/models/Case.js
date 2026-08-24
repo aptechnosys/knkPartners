@@ -85,6 +85,37 @@ proof_document: {
   default: "",
 },
 
+proofs: [
+  {
+    documentType: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    originalName: {
+      type: String,
+      trim: true,
+      default: "",
+    },
+
+    filePath: {
+      type: String,
+      required: true,
+    },
+
+    mimeType: {
+      type: String,
+      default: "",
+    },
+
+    uploadedAt: {
+      type: Date,
+      default: Date.now,
+    },
+  },
+],
+
 isArchived: {
   type: Boolean,
   default: false,

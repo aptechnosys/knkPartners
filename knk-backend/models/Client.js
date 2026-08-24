@@ -20,6 +20,11 @@ const clientSchema = new mongoose.Schema(
       default: "",
     },
 
+    webhookSecret: {
+      type: String,
+      default: "",
+    },
+
     isActive: {
       type: Boolean,
       default: true,

@@ -5,6 +5,7 @@ const router = express.Router();
 const {
   getClients,
   createClient,
+  updateClient,
   toggleClientStatus,
   regenerateApiKey,
 } = require("../controllers/clientController");
@@ -26,6 +27,13 @@ router.post(
   protect,
   adminOnly,
   createClient
+);
+
+router.put(
+  "/:id",
+  protect,
+  adminOnly,
+  updateClient
 );
 
 router.patch(
