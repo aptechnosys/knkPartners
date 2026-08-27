@@ -1,10 +1,31 @@
 const multer = require("multer");
 const path = require("path");
+const fs = require("fs");
 
-// Storage Config
+// ============================================================
+// PROOF UPLOAD DIRECTORY
+// Always resolve relative to the backend project directory
+// ============================================================
+
+const uploadDir = path.join(
+  __dirname,
+  "..",
+  "uploads",
+  "proofs"
+);
+
+// Create directory if it does not exist
+fs.mkdirSync(uploadDir, {
+  recursive: true,
+});
+
+// ============================================================
+// STORAGE CONFIG
+// ============================================================
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, "uploads/proofs");
+    cb(null, uploadDir);
   },
 
   filename: function (req, file, cb) {
@@ -18,7 +39,10 @@ const storage = multer.diskStorage({
   },
 });
 
-// File Filter
+// ============================================================
+// FILE FILTER
+// ============================================================
+
 const fileFilter = (req, file, cb) => {
   const allowedTypes = [
     "application/pdf",
@@ -27,9 +51,7 @@ const fileFilter = (req, file, cb) => {
     "image/png",
   ];
 
-  if (
-    allowedTypes.includes(file.mimetype)
-  ) {
+  if (allowedTypes.includes(file.mimetype)) {
     cb(null, true);
   } else {
     cb(
@@ -40,6 +62,10 @@ const fileFilter = (req, file, cb) => {
     );
   }
 };
+
+// ============================================================
+// MULTER CONFIG
+// ============================================================
 
 const uploadProof = multer({
   storage,
