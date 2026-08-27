@@ -1,0 +1,95 @@
+﻿# ==========================
+# Dependencies
+# ==========================
+node_modules/
+**/node_modules/
+
+# ==========================
+# Build Output
+# ==========================
+dist/
+build/
+coverage/
+**/dist/
+**/build/
+
+# ==========================
+# Environment Files
+# ==========================
+.env
+.env.*
+!.env.example
+**/.env
+
+# ==========================
+# Uploads (Runtime Files)
+# ==========================
+
+# Ignore all uploaded/runtime files
+uploads/*
+
+# ==========================
+# Keep required upload folders
+# ==========================
+
+# Proof uploads
+!uploads/proofs/
+!uploads/proofs/.gitkeep
+
+# Bulk uploads
+!uploads/bulk/
+!uploads/bulk/.gitkeep
+
+# Avatar uploads
+uploads/avatars/
+
+# ==========================
+# Deployment
+# ==========================
+.vercel/
+.vscode/
+
+# ==========================
+# Logs
+# ==========================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ==========================
+# OS Files
+# ==========================
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# ==========================
+# IDE
+# ==========================
+.idea/
+*.swp
+*.swo
+
+# ==========================
+# Cache
+# ==========================
+.cache/
+.eslintcache
+
+# ==========================
+# Archives
+# ==========================
+*.zip
+*.tar
+*.gz
+*.rar
+*.7z
+
+# ==========================
+# Temp Files
+# ==========================
+tmp/
+temp/

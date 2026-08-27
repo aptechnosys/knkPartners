@@ -1,0 +1,728 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>KNK Client API Documentation</title>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: #eee;
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    nav {
+      position: fixed;
+      width: 240px;
+      height: 100%;
+      background: #111827;
+      padding: 20px;
+      overflow-y: auto;
+    }
+
+    nav h2 {
+      color: #fff;
+      margin-bottom: 25px;
+    }
+
+    nav a {
+      display: block;
+      color: #cbd5e1;
+      text-decoration: none;
+      margin: 12px 0;
+      font-size: 14px;
+    }
+
+    nav a:hover {
+      color: #38bdf8;
+    }
+
+    main {
+      margin-left: 260px;
+      padding: 30px;
+      max-width: 1200px;
+    }
+
+    section {
+      background: #1e293b;
+      padding: 25px;
+      border-radius: 10px;
+      margin-bottom: 25px;
+    }
+
+    h1,
+    h2 {
+      color: #fff;
+    }
+
+    h3 {
+      color: #7dd3fc;
+      margin-top: 25px;
+    }
+
+    p {
+      color: #cbd5e1;
+    }
+
+    pre {
+      background: #020617;
+      color: #7dd3fc;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+      border: 1px solid #334155;
+    }
+
+    code {
+      color: #7dd3fc;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+    }
+
+    th,
+    td {
+      border: 1px solid #334155;
+      padding: 10px;
+      text-align: left;
+    }
+
+    th {
+      background: #0f172a;
+      color: #fff;
+    }
+
+    td {
+      color: #cbd5e1;
+    }
+
+    .method {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: 5px;
+      font-size: 12px;
+      font-weight: bold;
+      margin-right: 8px;
+    }
+
+    .get {
+      background: #064e3b;
+      color: #6ee7b7;
+    }
+
+    .post {
+      background: #1e3a8a;
+      color: #93c5fd;
+    }
+
+    .important {
+      background: #422006;
+      border-left: 4px solid #f59e0b;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 15px 0;
+      color: #fde68a;
+    }
+
+    .success {
+      background: #052e16;
+      border-left: 4px solid #22c55e;
+      padding: 15px;
+      border-radius: 6px;
+      margin: 15px 0;
+      color: #86efac;
+    }
+  </style>
+</head>
+
+<body>
+
+<nav>
+
+  <h2>KNK Client API</h2>
+
+  <a href="#intro">Introduction</a>
+  <a href="#auth">Authentication</a>
+
+  <a href="#submit">Submit Case</a>
+
+  <a href="#single">Single Case Status</a>
+  <a href="#bulk">Bulk Case Status</a>
+  <a href="#vendor">Vendor Case Status</a>
+
+  <a href="#proof">Proof Document</a>
+
+  <a href="#status">Status Values</a>
+  <a href="#errors">Error Codes</a>
+  <a href="#webhook">Webhooks</a>
+
+</nav>
+
+
+<main>
+
+<!-- ===================================================== -->
+<!-- INTRODUCTION -->
+<!-- ===================================================== -->
+
+<section id="intro">
+
+  <h1>KNK Partners Client Integration API</h1>
+
+  <p>
+    This API allows authorized clients to submit cases,
+    check case status, retrieve vendor cases and securely
+    download verification proof documents.
+  </p>
+
+  <h3>Base URL</h3>
+
+  <pre>https://knkpartner.com/api/v1</pre>
+
+  <h3>Client → KNK Case Submission</h3>
+
+  <p>
+    Clients can submit verification cases using the
+    following endpoint:
+  </p>
+
+  <pre>POST /api-inbox/client</pre>
+
+  <div class="important">
+    Replace the example client callback URL with the
+    actual callback URL provided by your organization.
+  </div>
+
+</section>
+
+
+<!-- ===================================================== -->
+<!-- AUTHENTICATION -->
+<!-- ===================================================== -->
+
+<section id="auth">
+
+  <h2>Authentication</h2>
+
+  <p>
+    All client API endpoints require an API key.
+  </p>
+
+  <p>
+    The API key must be sent using the
+    <code>x-api-key</code> request header.
+  </p>
+
+  <pre>x-api-key: YOUR_API_KEY
+Content-Type: application/json</pre>
+
+  <div class="important">
+    Keep your API key private. Do not expose it in
+    frontend JavaScript, public repositories or
+    client-side applications.
+  </div>
+
+</section>
+
+
+<!-- ===================================================== -->
+<!-- SUBMIT CASE -->
+<!-- ===================================================== -->
+
+<section id="submit">
+
+  <h2>
+    <span class="method post">POST</span>
+    /api-inbox/client
+  </h2>
+
+  <p>
+    Submit a new verification case to KNK Partners.
+  </p>
+
+  <h3>Request</h3>
+
+  <pre>POST https://knkpartner.com/api/v1/api-inbox/client
+
+x-api-key: YOUR_API_KEY
+Content-Type: application/json</pre>
+
+  <h3>Request Body</h3>
+
+  <pre>{
+  "applicationId": "REF-2026-000888",
+  "candidateName": "Faiyaz Khan",
+  "fatherName": "Azad Khan",
+  "dob": "16 Feb 1995",
+  "city": "Mumbai",
+  "state": "Maharashtra",
+  "vendor": "APtechnosys Agency",
+  "tat": 15,
+  "remark": "Urgent verification"
+}</pre>
+
+</section>
+
+
+<!-- ===================================================== -->
+<!-- SINGLE STATUS -->
+<!-- ===================================================== -->
+
+<section id="single">
+
+  <h2>
+    <span class="method get">GET</span>
+    /client/status/{applicationId}
+  </h2>
+
+  <p>
+    Retrieve the current status of a single case.
+  </p>
+
+  <h3>Request</h3>
+
+  <pre>GET https://knkpartner.com/api/v1/client/status/REF-2026-000888
+
+x-api-key: YOUR_API_KEY</pre>
+
+  <h3>Example Response</h3>
+
+  <pre>{
+  "success": true,
+  "applicationId": "REF-2026-000888",
+  "candidateName": "Faiyaz Khan",
+  "vendor": "APtechnosys Agency",
+  "status": "COMPLETED",
+  "remark": "",
+  "updatedAt": "2026-08-19T10:30:00.000Z"
+}</pre>
+
+</section>
+
+
+<!-- ===================================================== -->
+<!-- BULK STATUS -->
+<!-- ===================================================== -->
+
+<section id="bulk">
+
+  <h2>
+    <span class="method post">POST</span>
+    /client/status/bulk
+  </h2>
+
+  <p>
+    Retrieve the status of multiple applications in a
+    single request.
+  </p>
+
+  <h3>Request</h3>
+
+  <pre>POST https://knkpartner.com/api/v1/client/status/bulk
+
+x-api-key: YOUR_API_KEY
+Content-Type: application/json</pre>
+
+  <h3>Request Body</h3>
+
+  <pre>{
+  "applicationIds": [
+    "REF-2026-000888",
+    "REF-2026-000889",
+    "REF-2026-000890"
+  ]
+}</pre>
+
+  <h3>Example Response</h3>
+
+  <pre>{
+  "success": true,
+  "count": 3,
+  "cases": [
+    {
+      "applicationId": "REF-2026-000888",
+      "candidateName": "Faiyaz Khan",
+      "vendor": "APtechnosys Agency",
+      "status": "COMPLETED",
+      "updatedAt": "2026-08-19T10:30:00.000Z"
+    },
+    {
+      "applicationId": "REF-2026-000889",
+      "candidateName": "Ayesha Khan",
+      "vendor": "APtechnosys Agency",
+      "status": "IN_PROGRESS",
+      "updatedAt": "2026-08-19T09:20:00.000Z"
+    }
+  ]
+}</pre>
+
+</section>
+
+
+<!-- ===================================================== -->
+<!-- VENDOR STATUS -->
+<!-- ===================================================== -->
+
+<section id="vendor">
+
+  <h2>
+    <span class="method get">GET</span>
+    /client/status/vendor
+  </h2>
+
+  <p>
+    Retrieve cases belonging to the authenticated
+    client's vendor.
+  </p>
+
+  <h3>Request</h3>
+
+  <pre>GET https://knkpartner.com/api/v1/client/status/vendor
+
+x-api-key: YOUR_API_KEY</pre>
+
+  <h3>Example Response</h3>
+
+  <pre>{
+  "success": true,
+  "vendor": "APtechnosys Agency",
+  "count": 2,
+  "cases": [
+    {
+      "applicationId": "REF-2026-000888",
+      "candidateName": "Faiyaz Khan",
+      "status": "COMPLETED",
+      "updatedAt": "2026-08-19T10:30:00.000Z"
+    }
+  ]
+}</pre>
+
+</section>
+
+
+<!-- ===================================================== -->
+<!-- PROOF DOCUMENT -->
+<!-- ===================================================== -->
+
+<section id="proof">
+
+  <h2>
+    <span class="method get">GET</span>
+    /client/proof/{applicationId}
+  </h2>
+
+  <p>
+    Securely download the proof document associated
+    with a completed verification case.
+  </p>
+
+  <h3>Request</h3>
+
+  <pre>GET https://knkpartner.com/api/v1/client/proof/REF-2026-000888
+
+x-api-key: YOUR_API_KEY</pre>
+
+  <div class="success">
+    The proof document is protected by API-key
+    authentication. The document is not publicly
+    accessible.
+  </div>
+
+  <h3>Important</h3>
+
+  <p>
+    The API returns the proof document as a downloadable
+    file. The client must send the API key in the
+    <code>x-api-key</code> header.
+  </p>
+
+  <h3>Example cURL</h3>
+
+  <pre>curl -X GET \
+  "https://knkpartner.com/api/v1/client/proof/REF-2026-000888" \
+  -H "x-api-key: YOUR_API_KEY" \
+  -o proof.pdf</pre>
+
+</section>
+
+
+<!-- ===================================================== -->
+<!-- STATUS VALUES -->
+<!-- ===================================================== -->
+
+<section id="status">
+
+  <h2>Status Values</h2>
+
+  <table>
+
+    <tr>
+      <th>Status</th>
+      <th>Description</th>
+    </tr>
+
+    <tr>
+      <td>NEW</td>
+      <td>Case received and waiting for processing.</td>
+    </tr>
+
+    <tr>
+      <td>IN_PROGRESS</td>
+      <td>Verification is currently in progress.</td>
+    </tr>
+
+    <tr>
+      <td>COMPLETED</td>
+      <td>Verification has been completed.</td>
+    </tr>
+
+  </table>
+
+</section>
+
+
+<!-- ===================================================== -->
+<!-- ERROR CODES -->
+<!-- ===================================================== -->
+
+<section id="errors">
+
+  <h2>Error Codes</h2>
+
+  <table>
+
+    <tr>
+      <th>Code</th>
+      <th>Description</th>
+    </tr>
+
+    <tr>
+      <td>200</td>
+      <td>Request successful.</td>
+    </tr>
+
+    <tr>
+      <td>400</td>
+      <td>Bad request or invalid request data.</td>
+    </tr>
+
+    <tr>
+      <td>401</td>
+      <td>API key missing.</td>
+    </tr>
+
+    <tr>
+      <td>403</td>
+      <td>Invalid or disabled API key/client.</td>
+    </tr>
+
+    <tr>
+      <td>404</td>
+      <td>Case or proof document not found.</td>
+    </tr>
+
+    <tr>
+      <td>429</td>
+      <td>Too many requests.</td>
+    </tr>
+
+    <tr>
+      <td>500</td>
+      <td>Internal server error.</td>
+    </tr>
+
+  </table>
+
+
+  <!-- ===================================================== -->
+<!-- WEBHOOK -->
+<!-- ===================================================== -->
+
+<section id="webhook">
+
+  <h2>Webhook Notifications</h2>
+
+  <p>
+    KNK Partners can notify the client automatically when
+    a verification proof has been updated.
+  </p>
+
+  <p>
+    The client must provide a callback URL during the
+    client integration setup.
+  </p>
+
+  <h3>Event</h3>
+
+  <pre>PROOF_UPDATED</pre>
+
+  <h3>When is the webhook triggered?</h3>
+
+  <p>
+    The webhook is triggered when a verification case has
+    been processed and its proof document is available.
+  </p>
+
+  <h3>Webhook Request</h3>
+
+  <p>
+    KNK Partners sends a POST request to the client's
+    configured callback URL.
+  </p>
+
+  <pre>POST YOUR_CALLBACK_URL
+
+Content-Type: application/json</pre>
+
+  <h3>Example Payload</h3>
+
+  <pre>{
+  "event": "PROOF_UPDATED",
+  "applicationId": "REF-26-0002323",
+  "candidateName": "Ayaz Khan",
+  "vendor": "Ayaz_khan",
+  "proofDocument": "https://knkpartner.com/api/v1/client/proof/REF-26-0002323",
+  "verificationResult": "GREEN",
+  "verificationDate": "2026-08-16T11:56:01.865Z",
+  "status": "COMPLETED",
+  "updatedAt": "2026-08-20T10:15:10.255Z"
+}</pre>
+
+  <h3>Payload Fields</h3>
+
+  <table>
+
+    <tr>
+      <th>Field</th>
+      <th>Type</th>
+      <th>Description</th>
+    </tr>
+
+    <tr>
+      <td>event</td>
+      <td>String</td>
+      <td>Webhook event type. Currently PROOF_UPDATED.</td>
+    </tr>
+
+    <tr>
+      <td>applicationId</td>
+      <td>String</td>
+      <td>Unique application/reference number.</td>
+    </tr>
+
+    <tr>
+      <td>candidateName</td>
+      <td>String</td>
+      <td>Name of the candidate.</td>
+    </tr>
+
+    <tr>
+      <td>vendor</td>
+      <td>String</td>
+      <td>Vendor associated with the case.</td>
+    </tr>
+
+    <tr>
+      <td>proofDocument</td>
+      <td>String</td>
+      <td>
+        Secure endpoint used to download the proof document.
+      </td>
+    </tr>
+
+    <tr>
+      <td>verificationResult</td>
+      <td>String</td>
+      <td>
+        Verification result such as GREEN, RED or ORANGE.
+      </td>
+    </tr>
+
+    <tr>
+      <td>verificationDate</td>
+      <td>Date</td>
+      <td>Date and time when verification was performed.</td>
+    </tr>
+
+    <tr>
+      <td>status</td>
+      <td>String</td>
+      <td>Current case status.</td>
+    </tr>
+
+    <tr>
+      <td>updatedAt</td>
+      <td>Date</td>
+      <td>Last update timestamp of the case.</td>
+    </tr>
+
+  </table>
+
+  <h3>Downloading the Proof</h3>
+
+  <p>
+    The <code>proofDocument</code> value is a secure API
+    endpoint. The client must send its API key when
+    requesting the document.
+  </p>
+
+  <pre>GET https://knkpartner.com/api/v1/client/proof/REF-26-0002323
+
+x-api-key: YOUR_API_KEY</pre>
+
+  <h3>Example Webhook Handler</h3>
+
+  <pre>app.post("/webhook/knk", (req, res) => {
+
+  const data = req.body;
+
+  console.log("KNK Webhook:", data);
+
+  if (data.event === "PROOF_UPDATED") {
+
+    console.log(
+      "Proof updated for:",
+      data.applicationId
+    );
+
+    console.log(
+      "Proof URL:",
+      data.proofDocument
+    );
+
+  }
+
+  res.status(200).json({
+    success: true
+  });
+
+});</pre>
+
+  <div class="success">
+    The client should return HTTP 200 after successfully
+    receiving the webhook.
+  </div>
+
+  <div class="important">
+    The proofDocument URL should not be treated as a public
+    file URL. The client must use its API key when downloading
+    the document.
+  </div>
+
+</section>
+
+</section>
+
+</main>
+
+</body>
+</html>
