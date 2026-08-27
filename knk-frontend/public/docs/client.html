@@ -154,6 +154,7 @@
   <a href="#auth">Authentication</a>
 
   <a href="#submit">Submit Case</a>
+  <a href="#submit-bulk">Submit Bulk Cases</a>
 
   <a href="#single">Single Case Status</a>
   <a href="#bulk">Bulk Case Status</a>
@@ -262,6 +263,7 @@ Content-Type: application/json</pre>
   "applicationId": "REF-2026-000888",
   "candidateName": "Faiyaz Khan",
   "fatherName": "Azad Khan",
+  "street_address": "123 Main Street",
   "dob": "16 Feb 1995",
   "city": "Mumbai",
   "state": "Maharashtra",
@@ -269,6 +271,115 @@ Content-Type: application/json</pre>
   "tat": 15,
   "remark": "Urgent verification"
 }</pre>
+
+</section>
+
+
+<!-- ===================================================== -->
+<!-- SUBMIT BULK CASES -->
+<!-- ===================================================== -->
+
+<section id="submit-bulk">
+
+  <h2>
+    <span class="method post">POST</span>
+    /api-inbox/client/bulk
+  </h2>
+
+  <p>
+    Submit multiple verification cases to KNK Partners in a single API request.
+    A maximum of 100 cases can be submitted per request.
+  </p>
+
+  <h3>Request</h3>
+
+  <pre>POST https://knkpartner.com/api/v1/api-inbox/client/bulk
+
+x-api-key: YOUR_API_KEY
+Content-Type: application/json</pre>
+
+  <h3>Request Body</h3>
+
+  <pre>{
+  "cases": [
+    {
+      "applicationId": "REF-2026-000888",
+      "candidateName": "Faiyaz Khan",
+      "fatherName": "Azad Khan",
+      "street_address": "123 Main Street",
+      "dob": "16 Feb 1995",
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "pincode": "400001",
+      "tat": 15,
+      "remark": "Urgent verification",
+      "attachment": ""
+    },
+    {
+      "applicationId": "PL-108",
+      "candidateName": "Gayatri Rawat",
+      "fatherName": "Digambar Singh Rawat",
+      "street_address": "Flat 402, Green Residency, Station Road",
+      "dob": "15 Dec 1996",
+      "city": "Ahmednagar",
+      "state": "Maharashtra",
+      "pincode": "414001",
+      "tat": 5,
+      "remark": "Address verification",
+      "attachment": ""
+    },
+    {
+      "applicationId": "PL-109",
+      "candidateName": "Krutika Arun Baing",
+      "fatherName": "Arun Yashwant Baing",
+      "street_address": "Flat 804, Lake View Apartments, Andheri East",
+      "dob": "12 Nov 1995",
+      "city": "Mumbai",
+      "state": "Maharashtra",
+      "pincode": "400069",
+      "tat": 7,
+      "remark": "",
+      "attachment": ""
+    }
+  ]
+}</pre>
+
+  <h3>Response</h3>
+
+  <pre>{
+  "success": true,
+  "summary": {
+    "received": 3,
+    "created": 3,
+    "duplicates": 0,
+    "failed": 0
+  },
+  "results": [
+    {
+      "applicationId": "REF-2026-000888",
+      "status": "CREATED"
+    },
+    {
+      "applicationId": "PL-108",
+      "status": "CREATED"
+    },
+    {
+      "applicationId": "PL-109",
+      "status": "CREATED"
+    }
+  ]
+}</pre>
+
+  <h3>Notes</h3>
+
+  <ul>
+    <li>Send the client's API key using the <code>x-api-key</code> header.</li>
+    <li>The <code>cases</code> field must be an array.</li>
+    <li>Up to 100 cases can be submitted in one request.</li>
+    <li><code>applicationId</code> may contain letters, numbers, hyphens (<code>-</code>), and underscores (<code>_</code>).</li>
+    <li>Duplicate application IDs are allowed because the same application can have multiple address/check records.</li>
+    <li>The <code>vendor</code> is determined from the API key and should not be sent by the client.</li>
+  </ul>
 
 </section>
 

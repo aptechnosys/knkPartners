@@ -4,6 +4,7 @@ const express = require("express");
 const cors = require("cors");
 const compression = require("compression");
 const helmet = require("helmet");
+const fs = require("fs");
 const path = require("path");
 
 const connectDB = require("./config/db");
@@ -19,6 +20,36 @@ const clientApiRoutes = require("./routes/clientApiRoutes");
 const clientRoutes = require("./routes/clientRoutes");
 
 const app = express();
+
+/*
+====================================================
+UPLOAD DIRECTORIES
+====================================================
+
+Ensure runtime upload directories exist.
+
+Git will contain the folders using .gitkeep,
+but actual uploaded files will remain ignored.
+
+Required folders:
+
+uploads/
+├── avatars/
+├── proofs/
+└── bulk/
+*/
+
+const uploadDirs = [
+  path.join(__dirname, "uploads", "avatars"),
+  path.join(__dirname, "uploads", "proofs"),
+  path.join(__dirname, "uploads", "bulk"),
+];
+
+uploadDirs.forEach((dir) => {
+  fs.mkdirSync(dir, {
+    recursive: true,
+  });
+});
 
 /* Trust Proxy (Required for production + rate limiter) */
 app.set("trust proxy", 1);
@@ -98,11 +129,15 @@ app.use(
 Proof documents are intentionally NOT exposed
 through express.static().
 
+Bulk upload files are also intentionally NOT exposed
+through express.static().
+
 DO NOT add:
 
 app.use("/uploads", express.static(uploadsPath));
 
-because that would make proof files publicly accessible.
+because that would make proof and bulk files
+publicly accessible.
 */
 
 /* Routes */

@@ -25,23 +25,19 @@ coverage/
 # Uploads (Runtime Files)
 # ==========================
 
-# Ignore all uploaded/runtime files
-uploads/*
+# Ignore all files inside backend uploads
+knk-backend/uploads/*
 
-# ==========================
-# Keep required upload folders
-# ==========================
+# Keep the proof and bulk directories
+!knk-backend/uploads/proofs/
+!knk-backend/uploads/bulk/
 
-# Proof uploads
-!uploads/proofs/
-!uploads/proofs/.gitkeep
+# Keep only the placeholder files
+!knk-backend/uploads/proofs/.gitkeep
+!knk-backend/uploads/bulk/.gitkeep
 
-# Bulk uploads
-!uploads/bulk/
-!uploads/bulk/.gitkeep
-
-# Avatar uploads
-uploads/avatars/
+# Ignore avatar uploads
+knk-backend/uploads/avatars/
 
 # ==========================
 # Deployment

@@ -1,31 +1,97 @@
+# ==========================
+# Dependencies
+# ==========================
+node_modules/
+**/node_modules/
 
-node_modules
-dist
-build
-.vercel
-coverage
-.DS_Store
+# ==========================
+# Build Output
+# ==========================
+dist/
+build/
+coverage/
+**/dist/
+**/build/
+
+# ==========================
+# Environment Files
+# ==========================
 .env
 .env.*
 !.env.example
+**/.env
 
-# Uploads
+# ==========================
+# Uploads (Runtime Files)
+# ==========================
+
+# Ignore all runtime files inside uploads
+uploads/*
+
+# Allow Git to enter these directories
+!uploads/proofs/
+!uploads/bulk/
+
+# Ignore everything inside proofs
+uploads/proofs/*
+# But keep .gitkeep
+!uploads/proofs/.gitkeep
+
+# Ignore everything inside bulk
+uploads/bulk/*
+# But keep .gitkeep
+!uploads/bulk/.gitkeep
+
+# Ignore avatar uploads completely
 uploads/avatars/
-uploads/bulk/
-uploads/proofs/
 
-node_modules/
-dist/
-build/
+# ==========================
+# Deployment
+# ==========================
 .vercel/
 
-knk-backend/node_modules/
-knk-backend/.env
-knk-backend/uploads/
-knk-backend/uploads/avatars/
-knk-backend/uploads/proofs/
+# ==========================
+# Logs
+# ==========================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-knk-frontend/node_modules/
-knk-frontend/.env
-knk-frontend/dist/
+# ==========================
+# OS Files
+# ==========================
+.DS_Store
+Thumbs.db
+Desktop.ini
 
+# ==========================
+# IDE
+# ==========================
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ==========================
+# Cache
+# ==========================
+.cache/
+.eslintcache
+
+# ==========================
+# Archives
+# ==========================
+*.zip
+*.tar
+*.gz
+*.rar
+*.7z
+
+# ==========================
+# Temporary Files
+# ==========================
+tmp/
+temp/
