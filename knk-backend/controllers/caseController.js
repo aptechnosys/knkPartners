@@ -735,6 +735,77 @@ exports.uploadProofDocument = async (req, res, next) => {
   }
 };
 
+// ============================================================
+// VIEW / DOWNLOAD PROOF DOCUMENT
+// Protected route - Admin/authorized logged-in users only
+// ============================================================
+
+exports.viewProofDocument = async (req, res, next) => {
+  try {
+    const caseItem = await Case.findById(req.params.id);
+
+    if (!caseItem) {
+      return res.status(404).json({
+        success: false,
+        message: "Case not found",
+      });
+    }
+
+    if (!caseItem.proof_document) {
+      return res.status(404).json({
+        success: false,
+        message: "No proof document found for this case",
+      });
+    }
+
+    // Get only the actual filename stored in the database
+    const fileName = path.basename(caseItem.proof_document);
+
+    // Proof files are stored in:
+    // uploads/proofs/
+    const filePath = path.join(
+      process.cwd(),
+      "uploads",
+      "proofs",
+      fileName
+    );
+
+    // Check whether file actually exists
+    if (!fs.existsSync(filePath)) {
+      return res.status(404).json({
+        success: false,
+        message: "Proof document file not found on server",
+      });
+    }
+
+    // Detect file type
+    const ext = path.extname(fileName).toLowerCase();
+
+    const mimeTypes = {
+      ".pdf": "application/pdf",
+      ".jpg": "image/jpeg",
+      ".jpeg": "image/jpeg",
+      ".png": "image/png",
+    };
+
+    const contentType =
+      mimeTypes[ext] || "application/octet-stream";
+
+    res.setHeader("Content-Type", contentType);
+
+    // Open in browser instead of forcing download
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename="${fileName}"`
+    );
+
+    return res.sendFile(filePath);
+  } catch (error) {
+    console.error("VIEW PROOF DOCUMENT ERROR:", error);
+    next(error);
+  }
+};
+
   // ARCHIVE CASE
 exports.archiveCase = async (req, res) => {
   try {
@@ -955,15 +1026,469 @@ exports.bulkUpdateStatus = async (req, res, next) => {
 };
 
 
+// // BULK UPLOAD (EXCEL + ZIP)
+// // Maximum 100 Cases
+
+
+// exports.bulkUploadCases = async (req, res, next) => {
+//   try {
+    
+//     // 1. CHECK FILES
+    
+
+//     if (!req.files?.excel || !req.files?.zip) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Excel file and ZIP file are required.",
+//       });
+//     }
+
+//     const excelPath = req.files.excel[0].path;
+//     const zipPath = req.files.zip[0].path;
+
+//     // ============================================
+//     // 2. READ EXCEL
+//     // ============================================
+
+//     const excelData = readExcelFile(excelPath);
+
+//     if (!excelData || !Array.isArray(excelData)) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Invalid Excel file.",
+//       });
+//     }
+
+//     // ============================================
+//     // 3. MAXIMUM 100 CASES
+//     // ============================================
+
+//     if (excelData.length > 100) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Maximum 100 cases can be uploaded at once.",
+//         totalRows: excelData.length,
+//         maxAllowed: 100,
+//       });
+//     }
+
+//     if (excelData.length === 0) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Excel file contains no records.",
+//       });
+//     }
+
+//     // ============================================
+//     // 4. VALIDATE EXCEL
+//     // ============================================
+
+//     validateExcelData(excelData);
+
+//     // ============================================
+//     // 5. EXTRACT ZIP
+//     // ============================================
+
+//     const proofFolder = extractZip(zipPath);
+
+//     if (!fs.existsSync(proofFolder)) {
+//       return res.status(400).json({
+//         success: false,
+//         message: "Failed to extract proof ZIP.",
+//       });
+//     }
+
+//     // ============================================
+//     // 6. READ PROOF FILES
+//     // ============================================
+
+//     const proofFiles = fs.readdirSync(proofFolder);
+
+//     const matchedCases = [];
+//     const errors = [];
+
+//     // ============================================
+//     // 7. MATCH EXCEL WITH ZIP
+//     // ============================================
+
+//     for (const row of excelData) {
+//       const referenceNo = String(
+//         row["Reference No"] || ""
+//       ).trim();
+
+//       const fileName = String(
+//         row["File Name"] || ""
+//       ).trim();
+
+//       if (!referenceNo) {
+//         errors.push(
+//           "Reference No is missing in Excel."
+//         );
+//         continue;
+//       }
+
+//       if (!fileName) {
+//         errors.push(
+//           `File Name is missing for ${referenceNo}.`
+//         );
+//         continue;
+//       }
+
+//       // Match filename without extension
+//       const matchedFile = proofFiles.find(
+//         (file) =>
+//           path.parse(file).name.trim() ===
+//           fileName
+//       );
+
+//       if (!matchedFile) {
+//         errors.push(
+//           `Proof file not found for ${referenceNo} (Expected: ${fileName})`
+//         );
+//         continue;
+//       }
+
+//       // ============================================
+//       // 8. FIND CASE
+//       // ============================================
+
+//       const caseItem = await Case.findOne({
+//         comp_ref_no: referenceNo,
+//       });
+
+//       if (!caseItem) {
+//         errors.push(
+//           `Case not found for Reference No ${referenceNo}`
+//         );
+//         continue;
+//       }
+
+//       // ============================================
+//       // 9. PREVENT DUPLICATE COMPLETED CASE
+//       // ============================================
+
+//       if (
+//         String(caseItem.check_status)
+//           .toUpperCase() === "COMPLETED"
+//       ) {
+//         errors.push(
+//           `${referenceNo} is already completed.`
+//         );
+//         continue;
+//       }
+
+//       matchedCases.push({
+//         referenceNo,
+//         dbCaseId: caseItem._id,
+//         proofFile: matchedFile,
+
+//         verifyStatus: String(
+//           row["Verify Status"] || ""
+//         ).trim(),
+
+//         colourCode: String(
+//           row["Colour Code"] || ""
+//         ).trim(),
+
+//         verificationDate:
+//           row["Verification Date"],
+//       });
+
+//       console.log(
+//         `✅ Matched ${referenceNo} -> ${matchedFile}`
+//       );
+//     }
+
+//     // ============================================
+//     // 10. UPDATE CASES
+//     // ============================================
+
+//     let updatedCount = 0;
+
+//     for (const item of matchedCases) {
+//       const caseItem = await Case.findById(
+//         item.dbCaseId
+//       );
+
+//       if (!caseItem) {
+//         errors.push(
+//           `Case ${item.referenceNo} no longer exists.`
+//         );
+//         continue;
+//       }
+
+//       // ============================================
+//       // VERIFY STATUS
+//       // ============================================
+
+//       const verifyStatus =
+//         item.verifyStatus.toLowerCase();
+
+//       if (verifyStatus !== "completed") {
+//         errors.push(
+//           `${item.referenceNo}: Verify Status must be Completed.`
+//         );
+//         continue;
+//       }
+
+//       // ============================================
+//       // 11. COPY PROOF INTO PERMANENT PROOF FOLDER
+//       // ============================================
+
+//       const sourcePath = path.join(
+//         proofFolder,
+//         item.proofFile
+//       );
+
+//       const proofsDirectory = path.resolve(
+//         __dirname,
+//         "../uploads/proofs"
+//       );
+
+//       if (!fs.existsSync(proofsDirectory)) {
+//         fs.mkdirSync(proofsDirectory, {
+//           recursive: true,
+//         });
+//       }
+
+//       // Generate unique filename
+//       const uniqueFileName =
+//         `${Date.now()}-${Math.round(
+//           Math.random() * 1e9
+//         )}${path.extname(item.proofFile)}`;
+
+//       const destinationPath = path.join(
+//         proofsDirectory,
+//         uniqueFileName
+//       );
+
+//       // Copy ZIP proof to permanent folder
+//       fs.copyFileSync(
+//         sourcePath,
+//         destinationPath
+//       );
+
+//       // ============================================
+//       // 12. SAVE PROOF PATH
+//       // ============================================
+
+//       caseItem.proof_document =
+//         `/uploads/proofs/${uniqueFileName}`;
+
+//       // ============================================
+//       // 13. VERIFICATION RESULT
+//       // ============================================
+
+//       const colourMap = {
+//         green: "GREEN",
+//         red: "RED",
+//         orange: "ORANGE",
+//         insufficient: "INSUFFICIENT",
+//       };
+
+//       caseItem.verification_result =
+//         colourMap[
+//           item.colourCode.toLowerCase()
+//         ] || null;
+
+//       // ============================================
+//       // 14. VERIFICATION DATE
+//       // ============================================
+
+//       if (item.verificationDate) {
+//         caseItem.verified_date =
+//           excelDateToJSDate(
+//             item.verificationDate
+//           );
+//       } else {
+//         caseItem.verified_date = new Date();
+//       }
+
+//       // ============================================
+//       // 15. VERIFIED BY
+//       // ============================================
+
+//       caseItem.verified_by =
+//         req.user._id;
+
+//       // ============================================
+//       // 16. STATUS
+//       // ============================================
+
+//       caseItem.check_status =
+//         "COMPLETED";
+
+//       // ============================================
+//       // 17. OLD RECORD SAFETY
+//       // ============================================
+
+//       if (!caseItem.user) {
+//         caseItem.user = req.user._id;
+//       }
+
+//       // ============================================
+//       // 18. SAVE CASE
+//       // ============================================
+
+//       await caseItem.save();
+
+//       updatedCount++;
+
+//       // ============================================
+//       // 19. PROOF WEBHOOK
+//       // ============================================
+
+//       try {
+//         await sendProofWebhook(caseItem);
+
+//         console.log(
+//           `📤 Proof webhook sent -> ${item.referenceNo}`
+//         );
+//       } catch (webhookError) {
+//         console.error(
+//           `Proof webhook failed -> ${item.referenceNo}:`,
+//           webhookError.message
+//         );
+//       }
+
+//       // ============================================
+//       // 20. AUDIT LOG
+//       // ============================================
+
+//       try {
+//         await createAuditLog({
+//           userId: req.user.id,
+
+//           action: "BULK_PROOF_UPLOAD",
+
+//           caseId: caseItem._id,
+
+//           details:
+//             `Proof uploaded through bulk upload for ${caseItem.comp_ref_no}`,
+
+//           module: "CASE",
+//         });
+//       } catch (auditError) {
+//         console.error(
+//           "Audit log failed:",
+//           auditError.message
+//         );
+//       }
+//     }
+
+//     // ============================================
+//     // 21. CLEANUP EXCEL + ZIP
+//     // ============================================
+
+//     try {
+//       if (fs.existsSync(excelPath)) {
+//         fs.unlinkSync(excelPath);
+//       }
+
+//       if (fs.existsSync(zipPath)) {
+//         fs.unlinkSync(zipPath);
+//       }
+//     } catch (cleanupError) {
+//       console.error(
+//         "Excel/ZIP cleanup failed:",
+//         cleanupError.message
+//       );
+//     }
+
+//     // ============================================
+//     // 22. CLEANUP EXTRACTED FILES
+//     // ============================================
+
+//     try {
+//       const extractedFiles =
+//         fs.readdirSync(proofFolder);
+
+//       for (const file of extractedFiles) {
+//         const filePath =
+//           path.join(
+//             proofFolder,
+//             file
+//           );
+
+//         if (fs.existsSync(filePath)) {
+//           fs.unlinkSync(filePath);
+//         }
+//       }
+
+//       // Remove extraction folder
+//       if (fs.existsSync(proofFolder)) {
+//         fs.rmdirSync(proofFolder);
+//       }
+//     } catch (cleanupError) {
+//       console.error(
+//         "Proof cleanup failed:",
+//         cleanupError.message
+//       );
+//     }
+
+//     // ============================================
+//     // 23. FINAL RESPONSE
+//     // ============================================
+
+//     return res.status(200).json({
+//       success: errors.length === 0,
+
+//       message:
+//         errors.length === 0
+//           ? `${updatedCount} proofs uploaded successfully.`
+//           : "Bulk proof upload completed with some errors.",
+
+//       summary: {
+//         totalRows: excelData.length,
+
+//         matched: matchedCases.length,
+
+//         updated: updatedCount,
+
+//         failed: errors.length,
+//       },
+
+//       updatedCases: matchedCases.map(
+//         (item) => ({
+//           referenceNo:
+//             item.referenceNo,
+
+//           status: "COMPLETED",
+
+//           proofFile:
+//             item.proofFile,
+
+//           colourCode:
+//             item.colourCode,
+
+//           verificationDate:
+//             item.verificationDate,
+//         })
+//       ),
+
+//       errors,
+//     });
+//   } catch (error) {
+//     console.error(
+//       "BULK PROOF UPLOAD ERROR:",
+//       error
+//     );
+
+//     next(error);
+//   }
+// };
+
+// ============================================================
 // BULK UPLOAD (EXCEL + ZIP)
 // Maximum 100 Cases
-
+// ============================================================
 
 exports.bulkUploadCases = async (req, res, next) => {
   try {
-    
+
+    // ============================================================
     // 1. CHECK FILES
-    
+    // ============================================================
 
     if (!req.files?.excel || !req.files?.zip) {
       return res.status(400).json({
@@ -975,9 +1500,9 @@ exports.bulkUploadCases = async (req, res, next) => {
     const excelPath = req.files.excel[0].path;
     const zipPath = req.files.zip[0].path;
 
-    // ============================================
+    // ============================================================
     // 2. READ EXCEL
-    // ============================================
+    // ============================================================
 
     const excelData = readExcelFile(excelPath);
 
@@ -988,9 +1513,9 @@ exports.bulkUploadCases = async (req, res, next) => {
       });
     }
 
-    // ============================================
+    // ============================================================
     // 3. MAXIMUM 100 CASES
-    // ============================================
+    // ============================================================
 
     if (excelData.length > 100) {
       return res.status(400).json({
@@ -1008,15 +1533,15 @@ exports.bulkUploadCases = async (req, res, next) => {
       });
     }
 
-    // ============================================
+    // ============================================================
     // 4. VALIDATE EXCEL
-    // ============================================
+    // ============================================================
 
     validateExcelData(excelData);
 
-    // ============================================
+    // ============================================================
     // 5. EXTRACT ZIP
-    // ============================================
+    // ============================================================
 
     const proofFolder = extractZip(zipPath);
 
@@ -1027,20 +1552,21 @@ exports.bulkUploadCases = async (req, res, next) => {
       });
     }
 
-    // ============================================
+    // ============================================================
     // 6. READ PROOF FILES
-    // ============================================
+    // ============================================================
 
     const proofFiles = fs.readdirSync(proofFolder);
 
     const matchedCases = [];
     const errors = [];
 
-    // ============================================
+    // ============================================================
     // 7. MATCH EXCEL WITH ZIP
-    // ============================================
+    // ============================================================
 
     for (const row of excelData) {
+
       const referenceNo = String(
         row["Reference No"] || ""
       ).trim();
@@ -1063,11 +1589,13 @@ exports.bulkUploadCases = async (req, res, next) => {
         continue;
       }
 
+      // ----------------------------------------------------------
       // Match filename without extension
+      // ----------------------------------------------------------
+
       const matchedFile = proofFiles.find(
         (file) =>
-          path.parse(file).name.trim() ===
-          fileName
+          path.parse(file).name.trim() === fileName
       );
 
       if (!matchedFile) {
@@ -1077,9 +1605,9 @@ exports.bulkUploadCases = async (req, res, next) => {
         continue;
       }
 
-      // ============================================
+      // ==========================================================
       // 8. FIND CASE
-      // ============================================
+      // ==========================================================
 
       const caseItem = await Case.findOne({
         comp_ref_no: referenceNo,
@@ -1092,9 +1620,9 @@ exports.bulkUploadCases = async (req, res, next) => {
         continue;
       }
 
-      // ============================================
+      // ==========================================================
       // 9. PREVENT DUPLICATE COMPLETED CASE
-      // ============================================
+      // ==========================================================
 
       if (
         String(caseItem.check_status)
@@ -1105,6 +1633,10 @@ exports.bulkUploadCases = async (req, res, next) => {
         );
         continue;
       }
+
+      // ==========================================================
+      // STORE EVERYTHING FROM EXCEL
+      // ==========================================================
 
       matchedCases.push({
         referenceNo,
@@ -1121,6 +1653,11 @@ exports.bulkUploadCases = async (req, res, next) => {
 
         verificationDate:
           row["Verification Date"],
+
+        verificationRemark:
+          String(
+            row["Verification Remark"] || ""
+          ).trim(),
       });
 
       console.log(
@@ -1128,13 +1665,14 @@ exports.bulkUploadCases = async (req, res, next) => {
       );
     }
 
-    // ============================================
+    // ============================================================
     // 10. UPDATE CASES
-    // ============================================
+    // ============================================================
 
     let updatedCount = 0;
 
     for (const item of matchedCases) {
+
       const caseItem = await Case.findById(
         item.dbCaseId
       );
@@ -1146,9 +1684,9 @@ exports.bulkUploadCases = async (req, res, next) => {
         continue;
       }
 
-      // ============================================
-      // VERIFY STATUS
-      // ============================================
+      // ==========================================================
+      // 11. VERIFY STATUS
+      // ==========================================================
 
       const verifyStatus =
         item.verifyStatus.toLowerCase();
@@ -1160,9 +1698,9 @@ exports.bulkUploadCases = async (req, res, next) => {
         continue;
       }
 
-      // ============================================
-      // 11. COPY PROOF INTO PERMANENT PROOF FOLDER
-      // ============================================
+      // ==========================================================
+      // 12. COPY PROOF INTO PERMANENT PROOF FOLDER
+      // ==========================================================
 
       const sourcePath = path.join(
         proofFolder,
@@ -1180,7 +1718,10 @@ exports.bulkUploadCases = async (req, res, next) => {
         });
       }
 
+      // ----------------------------------------------------------
       // Generate unique filename
+      // ----------------------------------------------------------
+
       const uniqueFileName =
         `${Date.now()}-${Math.round(
           Math.random() * 1e9
@@ -1191,22 +1732,25 @@ exports.bulkUploadCases = async (req, res, next) => {
         uniqueFileName
       );
 
+      // ----------------------------------------------------------
       // Copy ZIP proof to permanent folder
+      // ----------------------------------------------------------
+
       fs.copyFileSync(
         sourcePath,
         destinationPath
       );
 
-      // ============================================
-      // 12. SAVE PROOF PATH
-      // ============================================
+      // ==========================================================
+      // 13. SAVE PROOF PATH
+      // ==========================================================
 
       caseItem.proof_document =
         `/uploads/proofs/${uniqueFileName}`;
 
-      // ============================================
-      // 13. VERIFICATION RESULT
-      // ============================================
+      // ==========================================================
+      // 14. VERIFICATION RESULT
+      // ==========================================================
 
       const colourMap = {
         green: "GREEN",
@@ -1220,9 +1764,16 @@ exports.bulkUploadCases = async (req, res, next) => {
           item.colourCode.toLowerCase()
         ] || null;
 
-      // ============================================
-      // 14. VERIFICATION DATE
-      // ============================================
+      // ==========================================================
+      // 15. VERIFICATION REMARK
+      // ==========================================================
+
+      caseItem.verification_remark =
+        item.verificationRemark || "";
+
+      // ==========================================================
+      // 16. VERIFICATION DATE
+      // ==========================================================
 
       if (item.verificationDate) {
         caseItem.verified_date =
@@ -1233,58 +1784,81 @@ exports.bulkUploadCases = async (req, res, next) => {
         caseItem.verified_date = new Date();
       }
 
-      // ============================================
-      // 15. VERIFIED BY
-      // ============================================
+      // ==========================================================
+      // 17. VERIFIED BY
+      // ==========================================================
 
       caseItem.verified_by =
         req.user._id;
 
-      // ============================================
-      // 16. STATUS
-      // ============================================
+      // ==========================================================
+      // 18. STATUS
+      // ==========================================================
 
+      // This moves the case from active/in-progress
+      // into the COMPLETED cases table/filter.
       caseItem.check_status =
         "COMPLETED";
 
-      // ============================================
-      // 17. OLD RECORD SAFETY
-      // ============================================
+      // ==========================================================
+      // 19. OLD RECORD SAFETY
+      // ==========================================================
 
       if (!caseItem.user) {
         caseItem.user = req.user._id;
       }
 
-      // ============================================
-      // 18. SAVE CASE
-      // ============================================
+      // ==========================================================
+      // 20. SAVE CASE
+      // ==========================================================
 
       await caseItem.save();
 
       updatedCount++;
 
-      // ============================================
-      // 19. PROOF WEBHOOK
-      // ============================================
+      console.log(
+        `✅ Case completed -> ${item.referenceNo}`
+      );
+
+      // ==========================================================
+      // 21. PROOF WEBHOOK
+      // ==========================================================
+      //
+      // IMPORTANT:
+      // sendProofWebhook(caseItem) uses:
+      //
+      // caseItem.vendor
+      // caseItem.comp_ref_no
+      // caseItem.proof_document
+      //
+      // Therefore each completed case sends its own
+      // proof URL to its own vendor.
+      //
+      // No proof is shared between vendors.
+      // ==========================================================
 
       try {
+
         await sendProofWebhook(caseItem);
 
         console.log(
-          `📤 Proof webhook sent -> ${item.referenceNo}`
+          `📤 Proof webhook sent -> ${item.referenceNo} -> ${caseItem.vendor}`
         );
+
       } catch (webhookError) {
+
         console.error(
-          `Proof webhook failed -> ${item.referenceNo}:`,
+          `❌ Proof webhook failed -> ${item.referenceNo}:`,
           webhookError.message
         );
       }
 
-      // ============================================
-      // 20. AUDIT LOG
-      // ============================================
+      // ==========================================================
+      // 22. AUDIT LOG
+      // ==========================================================
 
       try {
+
         await createAuditLog({
           userId: req.user.id,
 
@@ -1297,7 +1871,9 @@ exports.bulkUploadCases = async (req, res, next) => {
 
           module: "CASE",
         });
+
       } catch (auditError) {
+
         console.error(
           "Audit log failed:",
           auditError.message
@@ -1305,11 +1881,12 @@ exports.bulkUploadCases = async (req, res, next) => {
       }
     }
 
-    // ============================================
-    // 21. CLEANUP EXCEL + ZIP
-    // ============================================
+    // ============================================================
+    // 23. CLEANUP EXCEL + ZIP
+    // ============================================================
 
     try {
+
       if (fs.existsSync(excelPath)) {
         fs.unlinkSync(excelPath);
       }
@@ -1317,22 +1894,26 @@ exports.bulkUploadCases = async (req, res, next) => {
       if (fs.existsSync(zipPath)) {
         fs.unlinkSync(zipPath);
       }
+
     } catch (cleanupError) {
+
       console.error(
         "Excel/ZIP cleanup failed:",
         cleanupError.message
       );
     }
 
-    // ============================================
-    // 22. CLEANUP EXTRACTED FILES
-    // ============================================
+    // ============================================================
+    // 24. CLEANUP EXTRACTED FILES
+    // ============================================================
 
     try {
+
       const extractedFiles =
         fs.readdirSync(proofFolder);
 
       for (const file of extractedFiles) {
+
         const filePath =
           path.join(
             proofFolder,
@@ -1348,18 +1929,21 @@ exports.bulkUploadCases = async (req, res, next) => {
       if (fs.existsSync(proofFolder)) {
         fs.rmdirSync(proofFolder);
       }
+
     } catch (cleanupError) {
+
       console.error(
         "Proof cleanup failed:",
         cleanupError.message
       );
     }
 
-    // ============================================
-    // 23. FINAL RESPONSE
-    // ============================================
+    // ============================================================
+    // 25. FINAL RESPONSE
+    // ============================================================
 
     return res.status(200).json({
+
       success: errors.length === 0,
 
       message:
@@ -1368,36 +1952,49 @@ exports.bulkUploadCases = async (req, res, next) => {
           : "Bulk proof upload completed with some errors.",
 
       summary: {
-        totalRows: excelData.length,
 
-        matched: matchedCases.length,
+        totalRows:
+          excelData.length,
 
-        updated: updatedCount,
+        matched:
+          matchedCases.length,
 
-        failed: errors.length,
+        updated:
+          updatedCount,
+
+        failed:
+          errors.length,
       },
 
-      updatedCases: matchedCases.map(
-        (item) => ({
-          referenceNo:
-            item.referenceNo,
+      updatedCases:
+        matchedCases.map(
+          (item) => ({
 
-          status: "COMPLETED",
+            referenceNo:
+              item.referenceNo,
 
-          proofFile:
-            item.proofFile,
+            status:
+              "COMPLETED",
 
-          colourCode:
-            item.colourCode,
+            proofFile:
+              item.proofFile,
 
-          verificationDate:
-            item.verificationDate,
-        })
-      ),
+            colourCode:
+              item.colourCode,
+
+            verificationDate:
+              item.verificationDate,
+
+            verificationRemark:
+              item.verificationRemark,
+          })
+        ),
 
       errors,
     });
+
   } catch (error) {
+
     console.error(
       "BULK PROOF UPLOAD ERROR:",
       error

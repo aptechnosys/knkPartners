@@ -304,6 +304,49 @@ const saveVerification =
     }
   };
 
+      // view proof document in a new tab
+  const viewProof = async () => {
+  try {
+    const response = await API.get(
+      `/cases/${id}/proof`,
+      {
+        responseType: "blob",
+      }
+    );
+
+    const fileBlob = new Blob(
+      [response.data],
+      {
+        type:
+          response.headers["content-type"] ||
+          "application/octet-stream",
+      }
+    );
+
+    const fileUrl =
+      window.URL.createObjectURL(fileBlob);
+
+    window.open(
+      fileUrl,
+      "_blank",
+      "noopener,noreferrer"
+    );
+
+    // Release memory after opening
+    setTimeout(() => {
+      window.URL.revokeObjectURL(fileUrl);
+    }, 10000);
+  } catch (err) {
+    console.error("View proof error:", err);
+
+    showToast(
+      err.response?.data?.message ||
+        "Unable to view proof document",
+      "error"
+    );
+  }
+};
+
   return (
     <DashboardLayout title="Case Details" breadcrumbs={["Home", "Cases", caseData.comp_ref_no]}>
       <div className="space-y-5">
@@ -536,16 +579,12 @@ const saveVerification =
 
           {caseData?.proof_document && (
           <div className="mt-3">
-
-            <a
-              href={`${import.meta.env.VITE_SERVER_URL}${caseData.proof_document}`}
-              target="_blank"
-              rel="noreferrer"
-              className="inline-flex items-center bg-slate-800 text-white px-4 py-2 rounded-lg"
+            <button
+              onClick={viewProof}
+              className="inline-flex items-center bg-slate-800 hover:bg-slate-900 text-white px-4 py-2 rounded-lg transition-colors"
             >
               View Proof
-            </a>
-
+            </button>
           </div>
         )}
 

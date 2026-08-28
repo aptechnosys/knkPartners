@@ -59,6 +59,9 @@ const sendProofWebhook = async (caseData) => {
       verificationResult:
         caseData.verification_result || "",
 
+      verificationRemark:
+         caseData.verification_remark || "",  
+
       verificationDate:
         caseData.verified_date || null,
 

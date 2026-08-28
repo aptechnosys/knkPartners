@@ -31,6 +31,7 @@ const {
   bulkDeleteCases,
   bulkUpdateStatus,
   bulkUploadCases,
+  viewProofDocument,
 } = require("../controllers/caseController");
 
 
@@ -69,6 +70,13 @@ router.put(
   protect,
   validateBulkStatus,
   bulkUpdateStatus
+);
+
+// VIEW PROOF DOCUMENT
+router.get(
+  "/cases/:id/proof",
+  protect,
+  viewProofDocument
 );
 
 // SINGLE CASE
