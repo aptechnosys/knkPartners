@@ -481,7 +481,7 @@ export default function ApiInbox() {
 
                         {/* ADDRESS */}
                         <td className="px-4 py-3.5 text-sm text-slate-500 max-w-[220px] truncate">
-                          {c.street_address || "—"}
+                          {c.address || "—"}
                         </td>
 
                         {/* CITY */}

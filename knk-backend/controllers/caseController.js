@@ -404,7 +404,7 @@ exports.getDashboardStats = async (req, res, next) => {
   }
 };
 
-//GetSingleCase
+//Get Single Case
 
 exports.getSingleCase = async (req, res, next) => {
 

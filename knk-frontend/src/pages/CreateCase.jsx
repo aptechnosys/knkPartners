@@ -8,7 +8,7 @@ export default function CreateCase() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
     comp_ref_no: "", candidate_name: "", father_name: "", candidate_dob: "",
-    street_address: "", city: "", state: "", pincode: "", vendor: "", tat: "", remark: ""
+    address: "", city: "", state: "", pincode: "", vendor: "", tat: "", remark: ""
   });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
@@ -57,7 +57,7 @@ export default function CreateCase() {
             {field("Vendor", "vendor")}
             {field("TAT (days)", "tat", "text", "5")}
           </div>
-          {field("Street Address", "street_address")}
+          {field("Address", "address")}
           <div>
             <label className="block text-xs text-slate-500 mb-1.5">Remark</label>
             <textarea value={form.remark} onChange={e => setForm({...form, remark: e.target.value})} rows={3}

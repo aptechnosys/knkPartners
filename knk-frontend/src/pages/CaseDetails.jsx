@@ -70,7 +70,7 @@ export default function CaseDetails() {
   // Form state
   const [form, setForm] = useState({
     candidate_name: "", father_name: "", candidate_dob: "", doj: "",
-    employee_id: "", phone: "", email: "", street_address: "",
+    employee_id: "", phone: "", email: "", address: "",
     city: "", state: "", country: "", pincode: "",
     residence_type: "", vendor: "", remark: "", internal_notes: ""
   });
@@ -97,7 +97,7 @@ export default function CaseDetails() {
         employee_id: d.employee_id || "",
         phone: d.phone || "",
         email: d.email || "",
-        street_address: d.street_address || "",
+        address: d.address || "",
         city: d.city || "",
         state: d.state || "",
         country: d.country || "India",
@@ -188,7 +188,7 @@ export default function CaseDetails() {
         employee_id: caseData.employee_id || "",
         phone: caseData.phone || "",
         email: caseData.email || "",
-        street_address: caseData.street_address || "",
+        address: caseData.address || "",
         city: caseData.city || "",
         state: caseData.state || "",
         country: caseData.country || "India",
@@ -392,7 +392,7 @@ const saveVerification =
               </div>
               <div className="p-5 grid grid-cols-2 md:grid-cols-4 gap-5">
                 <InfoRow label="Full Name" value={caseData.candidate_name} />
-                <InfoRow label="Address" value={caseData.street_address} />
+                <InfoRow label="Address" value={caseData.address} />
                 <InfoRow label="Father Name" value={caseData.father_name} />
                 <InfoRow label="City / State" value={[caseData.city, caseData.state].filter(Boolean).join(" / ")} />
                 <InfoRow label="Date of Birth" value={caseData.candidate_dob ? new Date(caseData.candidate_dob).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" }) : "—"} />
@@ -422,7 +422,7 @@ const saveVerification =
                   <FormInput label="Phone" value={form.phone} onChange={e => setForm({...form, phone: e.target.value})} placeholder="+91 XXXXX XXXXX" />
                   <FormInput label="Email" type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} />
                 </div>
-                <FormInput label="Street Address" value={form.street_address} onChange={e => setForm({...form, street_address: e.target.value})} />
+                <FormInput label="Address" value={form.address} onChange={e => setForm({...form, address: e.target.value})} />
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <FormInput label="City" value={form.city} onChange={e => setForm({...form, city: e.target.value})} />
                   <FormInput label="State" value={form.state} onChange={e => setForm({...form, state: e.target.value})} />

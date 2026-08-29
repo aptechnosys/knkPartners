@@ -688,7 +688,7 @@ Retry-After: 30   # Only present when rate limited (429)</pre>
         <tr><td class="td-key">candidate_name</td><td class="td-type">string</td><td><span class="badge-optional">optional</span></td><td class="td-desc">Full legal name of the candidate</td></tr>
         <tr><td class="td-key">father_name</td><td class="td-type">string</td><td><span class="badge-optional">optional</span></td><td class="td-desc">Father's name for identity verification</td></tr>
         <tr><td class="td-key">candidate_dob</td><td class="td-type">string (ISO 8601)</td><td><span class="badge-optional">optional</span></td><td class="td-desc">Date of birth. Format: <code style="font-family:monospace">1991-09-22</code></td></tr>
-        <tr><td class="td-key">street_address</td><td class="td-type">string</td><td><span class="badge-optional">optional</span></td><td class="td-desc">Candidate's residential street address</td></tr>
+        <tr><td class="td-key">address</td><td class="td-type">string</td><td><span class="badge-optional">optional</span></td><td class="td-desc">Candidate's residential street address</td></tr>
         <tr><td class="td-key">city</td><td class="td-type">string</td><td><span class="badge-optional">optional</span></td><td class="td-desc">City of residence</td></tr>
         <tr><td class="td-key">state</td><td class="td-type">string</td><td><span class="badge-optional">optional</span></td><td class="td-desc">State / province</td></tr>
         <tr><td class="td-key">pincode</td><td class="td-type">string</td><td><span class="badge-optional">optional</span></td><td class="td-desc">Postal / ZIP code</td></tr>
@@ -715,7 +715,7 @@ Retry-After: 30   # Only present when rate limited (429)</pre>
     "candidate_name": "Ananya Reddy",
     "father_name": "Suresh Reddy",
     "candidate_dob": "1991-09-22",
-    "street_address": "42, Lake View Colony",
+    "address": "42, Lake View Colony",
     "city": "Hyderabad",
     "state": "Telangana",
     "pincode": "500032",
@@ -757,7 +757,7 @@ console.log(response.data); // { success: true, data: { ... } }</pre>
   "candidate_name": "Ananya Reddy",
   "father_name": "Suresh Reddy",
   "candidate_dob": "1991-09-22",
-  "street_address": "42, Lake View Colony",
+  "address": "42, Lake View Colony",
   "city": "Hyderabad",
   "state": "Telangana",
   "pincode": "500032",
@@ -940,7 +940,7 @@ const { data, total, totalPages } = response.data;</pre>
     "candidate_name": "Ananya Reddy",
     "father_name": "Suresh Reddy",
     "candidate_dob": "1991-09-22T00:00:00.000Z",
-    "street_address": "42, Lake View Colony",
+    "address": "42, Lake View Colony",
     "city": "Hyderabad",
     "state": "Telangana",
     "pincode": "500032",

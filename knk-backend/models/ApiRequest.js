@@ -25,13 +25,12 @@ const apiRequestSchema = new mongoose.Schema(
       default: "",
     },
 
-    // Candidate Address
-    street_address: {
+   // Candidate Address
+    address: {
       type: String,
       default: "",
       trim: true,
     },
-
     
 
     city: {

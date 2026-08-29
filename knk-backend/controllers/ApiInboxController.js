@@ -97,7 +97,7 @@ const createApiRequest = async (req, res) => {
       candidateName,
       fatherName,
       dob,
-      street_address,
+      address,
       city,
       state,
       pincode,
@@ -139,7 +139,7 @@ const createApiRequest = async (req, res) => {
       fatherName,
       dob,
 
-      street_address,
+      address,
 
       city,
       state,
@@ -263,7 +263,7 @@ const processApiRequest = async (req, res) => {
       candidate_dob: parseClientDob(request.dob),
 
       // Candidate address
-      address: request.street_address || "",
+      address: request.address || "",
 
       city: request.city || "",
 
@@ -425,7 +425,7 @@ const createBulkApiRequests = async (req, res) => {
 
           dob: item.dob,
 
-          street_address: item.street_address,
+          address: item.address,
 
           city: item.city,
 
@@ -664,7 +664,7 @@ const processBulkApiRequests = async (req, res) => {
           candidate_dob: parseClientDob(request.dob),
 
           // Candidate address
-          address: request.street_address || "",
+         address: request.address || "",
 
           city: request.city || "",
 
