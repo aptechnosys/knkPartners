@@ -737,7 +737,7 @@ exports.uploadProofDocument = async (req, res, next) => {
 
 // ============================================================
 // VIEW / DOWNLOAD PROOF DOCUMENT
-// Protected route - Admin/authorized logged-in users only
+// Protected route - logged-in users
 // ============================================================
 
 exports.viewProofDocument = async (req, res, next) => {
@@ -751,26 +751,66 @@ exports.viewProofDocument = async (req, res, next) => {
       });
     }
 
-    if (!caseItem.proof_document) {
+    // ----------------------------------------------------------
+    // Get proof path
+    // Supports:
+    // 1. Legacy proof_document
+    // 2. New proofs[] array
+    // ----------------------------------------------------------
+
+    let proofPath = caseItem.proof_document;
+
+    if (
+      !proofPath &&
+      Array.isArray(caseItem.proofs) &&
+      caseItem.proofs.length > 0
+    ) {
+      proofPath =
+        caseItem.proofs[caseItem.proofs.length - 1].filePath;
+    }
+
+    if (!proofPath) {
       return res.status(404).json({
         success: false,
         message: "No proof document found for this case",
       });
     }
 
-    // Get only the actual filename stored in the database
-    const fileName = path.basename(caseItem.proof_document);
+    // ----------------------------------------------------------
+    // Get only filename
+    // ----------------------------------------------------------
 
-    // Proof files are stored in:
-    // uploads/proofs/
+    const fileName = path.basename(proofPath);
+
+    // ----------------------------------------------------------
+    // IMPORTANT:
+    // Use the SAME directory structure as uploadProof.js
+    //
+    // caseController.js
+    //      ↓
+    // ../uploads/proofs
+    // ----------------------------------------------------------
+
     const filePath = path.join(
-      process.cwd(),
+      __dirname,
+      "..",
       "uploads",
       "proofs",
       fileName
     );
 
-    // Check whether file actually exists
+    console.log("========== VIEW PROOF ==========");
+    console.log("Case:", caseItem.comp_ref_no);
+    console.log("Proof path from DB:", proofPath);
+    console.log("Filename:", fileName);
+    console.log("Physical file path:", filePath);
+    console.log("File exists:", fs.existsSync(filePath));
+    console.log("================================");
+
+    // ----------------------------------------------------------
+    // Check physical file
+    // ----------------------------------------------------------
+
     if (!fs.existsSync(filePath)) {
       return res.status(404).json({
         success: false,
@@ -778,7 +818,10 @@ exports.viewProofDocument = async (req, res, next) => {
       });
     }
 
-    // Detect file type
+    // ----------------------------------------------------------
+    // Detect MIME type
+    // ----------------------------------------------------------
+
     const ext = path.extname(fileName).toLowerCase();
 
     const mimeTypes = {
@@ -793,15 +836,20 @@ exports.viewProofDocument = async (req, res, next) => {
 
     res.setHeader("Content-Type", contentType);
 
-    // Open in browser instead of forcing download
+    // Open in browser instead of downloading
     res.setHeader(
       "Content-Disposition",
       `inline; filename="${fileName}"`
     );
 
     return res.sendFile(filePath);
+
   } catch (error) {
-    console.error("VIEW PROOF DOCUMENT ERROR:", error);
+    console.error(
+      "VIEW PROOF DOCUMENT ERROR:",
+      error
+    );
+
     next(error);
   }
 };
