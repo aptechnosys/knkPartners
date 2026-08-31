@@ -60,9 +60,7 @@ const NAV = [
       children: [
         { label: "New", path: "/cases?status=NEW" },
         { label: "In Progress", path: "/cases?status=IN_PROGRESS" },
-        { label: "Pending", path: "/cases?status=PENDING" },
         { label: "Completed", path: "/cases?status=COMPLETED" },
-        { label: "Insufficient", path: "/cases?status=INSUFFICIENT" },
       ],
     },
   ],

@@ -170,7 +170,9 @@ const archiveCase = async (id) => {
   }
 };
 
-// for exporting new cases to excel
+// ============================================================
+// EXPORT ALL NEW CASES TO EXCEL
+// ============================================================
 
 const exportNewCases = async () => {
   try {
@@ -186,44 +188,48 @@ const exportNewCases = async () => {
     }
 
     const exportData = cases.map((item) => ({
-          // Existing Data
-          "Reference No": item.comp_ref_no || "-",
-          Candidate: item.candidate_name || "-",
-          "Father Name": item.father_name || "-",
+      "Reference No": item.comp_ref_no || "-",
 
-          DOB: item.candidate_dob
-            ? new Date(item.candidate_dob).toLocaleDateString("en-GB")
-            : "",
+      Candidate: item.candidate_name || "-",
 
-          City: item.city || "",
-          State: item.state || "",
-          Vendor: item.vendor || "",
+      "Father Name": item.father_name || "-",
 
-          // Existing status (read only)
-          Status: item.check_status || "NEW",
+      DOB: item.candidate_dob
+        ? new Date(item.candidate_dob).toLocaleDateString("en-GB")
+        : "",
 
-          "Assigned To":
-            item.assignedTo?.email || "Unassigned",
+      Address: item.address || "",
 
-          TAT: item.tat || "",
-          Remark: item.remark || "",
+      City: item.city || "",
 
-          "Created At": item.createdAt
-            ? new Date(item.createdAt).toLocaleString()
-            : "",
+      State: item.state || "",
 
-          // ============================
-          // Client fills these columns
-          // ============================
+      "Pin Code": item.pincode || "",
 
-          "Verification Date": "",
+      Vendor: item.vendor || "",
 
-          "Colour Code": "",
+      Status: item.check_status || "NEW",
 
-          "Verify Status": "",
+      "Assigned To":
+        item.assignedTo?.email || "Unassigned",
 
-          "File Name": "",
-        }));
+      TAT: item.tat || "",
+
+      Remark: item.remark || "",
+
+      "Created At": item.createdAt
+        ? new Date(item.createdAt).toLocaleString()
+        : "",
+
+      // Client fills these columns
+      "Verification Date": "",
+
+      "Colour Code": "",
+
+      "Verify Status": "",
+
+      "File Name": "",
+    }));
 
     const worksheet =
       XLSX.utils.json_to_sheet(exportData);
@@ -260,151 +266,338 @@ const exportNewCases = async () => {
       }),
       `KNK_New_Cases_${new Date()
         .toISOString()
-        .slice(0, 100)}.xlsx`
+        .slice(0, 10)}.xlsx`
     );
+
   } catch (err) {
     console.error(err);
+
     alert("Failed to export New Cases.");
   }
 };
 
-// for multiple case selection and bulk export to excel and status update
+
+// ============================================================
+// MULTIPLE CASE SELECTION
+// ============================================================
+
 const toggleCaseSelection = (refNo) => {
   setSelectedCases((prev) => {
+    // Remove case if already selected
     if (prev.includes(refNo)) {
       return prev.filter((id) => id !== refNo);
     }
 
+    // Maximum 100 cases
     if (prev.length >= 100) {
-      alert("Maximum 100 cases can be selected.");
+      toast.error("Maximum 100 cases can be selected.");
       return prev;
     }
 
+    // Add case
     return [...prev, refNo];
   });
 };
 
-//header checkbox to select all cases on current page
-const handleSelectAll = () => {
+
+// ============================================================
+// SELECT / UNSELECT ALL CASES
+//
+// status:
+// NEW
+// IN_PROGRESS
+// COMPLETED
+// ============================================================
+
+const handleSelectAll = (status) => {
   const selectableCases = cases
-    .filter((c) => c.check_status === "NEW")
+    .filter((c) => c.check_status === status)
     .slice(0, 100)
     .map((c) => c.comp_ref_no);
 
-  if (selectedCases.length === selectableCases.length) {
-    setSelectedCases([]);
+  if (!selectableCases.length) {
+    toast.error(`No ${status} cases found.`);
+    return;
+  }
+
+  const allSelected = selectableCases.every((refNo) =>
+    selectedCases.includes(refNo)
+  );
+
+  if (allSelected) {
+    // Remove only the cases belonging to this status
+    setSelectedCases((prev) =>
+      prev.filter(
+        (refNo) =>
+          !selectableCases.includes(refNo)
+      )
+    );
   } else {
-    setSelectedCases(selectableCases);
+    // Add cases without creating duplicates
+    setSelectedCases((prev) => {
+      const merged = [
+        ...prev,
+        ...selectableCases,
+      ];
+
+      return [...new Set(merged)].slice(0, 100);
+    });
   }
 };
 
-// export selected cases to excel
-const exportSelectedCases = async () => {
+
+// ============================================================
+// CHECK WHETHER ALL CASES OF A STATUS ARE SELECTED
+//
+// Used by the header checkbox in:
+// NEW / WIP / COMPLETED
+// ============================================================
+
+const areAllCasesSelected = (status) => {
+  const selectableCases = cases
+    .filter((c) => c.check_status === status)
+    .slice(0, 100)
+    .map((c) => c.comp_ref_no);
+
+  if (!selectableCases.length) {
+    return false;
+  }
+
+  return selectableCases.every((refNo) =>
+    selectedCases.includes(refNo)
+  );
+};
+
+
+// ============================================================
+// EXPORT SELECTED CASES TO EXCEL
+//
+// status:
+// NEW
+// IN_PROGRESS
+// COMPLETED
+//
+// sheetName:
+// New Cases
+// WIP Cases
+// Completed Cases
+// ============================================================
+
+const exportSelectedCases = async (
+  status = "NEW",
+  sheetName = "Selected Cases"
+) => {
   try {
+    // ----------------------------------------------------------
+    // CHECK SELECTION
+    // ----------------------------------------------------------
+
     if (!selectedCases.length) {
       toast.error("Please select at least one case.");
       return;
     }
 
+    // ----------------------------------------------------------
+    // MAXIMUM 100 CASES
+    // ----------------------------------------------------------
+
     if (selectedCases.length > 100) {
-      toast.error("Maximum 100 cases can be exported.");
+      toast.error(
+        "Maximum 100 cases can be exported."
+      );
       return;
     }
 
+    // ----------------------------------------------------------
+    // GET CASES FOR CURRENT STATUS
+    // ----------------------------------------------------------
+
     const res = await API.get(
-      `/cases?status=NEW&page=1&limit=1000`
+      `/cases?status=${status}&page=1&limit=1000`
     );
 
     const cases = res.data.data || [];
+
+    // ----------------------------------------------------------
+    // FIND SELECTED CASES
+    // ----------------------------------------------------------
 
     const selected = cases.filter((item) =>
       selectedCases.includes(item.comp_ref_no)
     );
 
     if (!selected.length) {
-      toast.error("No selected cases found.");
+      toast.error(
+        `No selected ${sheetName} found.`
+      );
       return;
     }
 
+    // ----------------------------------------------------------
+    // PREPARE EXCEL DATA
+    // ----------------------------------------------------------
+
     const exportData = selected.map((item) => ({
-      "Reference No": item.comp_ref_no || "-",
-      Candidate: item.candidate_name || "-",
-      "Father Name": item.father_name || "-",
+      "Reference No":
+        item.comp_ref_no || "-",
+
+      Candidate:
+        item.candidate_name || "-",
+
+      "Father Name":
+        item.father_name || "-",
 
       DOB: item.candidate_dob
-        ? new Date(item.candidate_dob).toLocaleDateString("en-GB")
+        ? new Date(
+            item.candidate_dob
+          ).toLocaleDateString("en-GB")
         : "",
 
-      City: item.city || "",
-      State: item.state || "",
-      Vendor: item.vendor || "",
+      Address:
+        item.address || "",
 
-      Status: item.check_status || "NEW",
+      City:
+        item.city || "",
+
+      State:
+        item.state || "",
+
+      "Pin Code":
+        item.pincode || "",
+
+      Vendor:
+        item.vendor || "",
+
+      Status:
+        item.check_status || status,
 
       "Assigned To":
-        item.assignedTo?.email || "Unassigned",
+        item.assignedTo?.email ||
+        "Unassigned",
 
-      TAT: item.tat || "",
-      Remark: item.remark || "",
+      TAT:
+        item.tat || "",
 
-      "Created At": item.createdAt
-        ? new Date(item.createdAt).toLocaleString()
-        : "",
+      Remark:
+        item.remark || "",
 
-      "Verification Date": "",
-      "Colour Code": "",
-      "Verify Status": "",
+      "Created At":
+        item.createdAt
+          ? new Date(
+              item.createdAt
+            ).toLocaleString()
+          : "",
+
+      // --------------------------------------------------------
+      // VERIFICATION INFORMATION
+      // --------------------------------------------------------
+
+      "Verification Date":
+        item.verified_date
+          ? new Date(
+              item.verified_date
+            ).toLocaleDateString("en-GB")
+          : "",
+
+      "Colour Code":
+        item.verification_result || "",
+
+      "Verify Status":
+        item.check_status === "COMPLETED"
+          ? "Completed"
+          : "",
+
+      "Verification Remark":
+        item.verification_remark || "",
+
       "File Name": "",
     }));
 
+    // ----------------------------------------------------------
+    // CREATE WORKSHEET
+    // ----------------------------------------------------------
+
     const worksheet =
-      XLSX.utils.json_to_sheet(exportData);
+      XLSX.utils.json_to_sheet(
+        exportData
+      );
 
-    worksheet["!cols"] = Object.keys(exportData[0]).map(
-      (key) => ({
-        wch:
-          Math.max(
-            key.length,
-            ...exportData.map((r) =>
-              String(r[key] || "").length
-            )
-          ) + 5,
-      })
-    );
+    // ----------------------------------------------------------
+    // AUTO COLUMN WIDTH
+    // ----------------------------------------------------------
 
-    const workbook = XLSX.utils.book_new();
+    worksheet["!cols"] =
+      Object.keys(exportData[0]).map(
+        (key) => ({
+          wch:
+            Math.max(
+              key.length,
+              ...exportData.map((row) =>
+                String(
+                  row[key] || ""
+                ).length
+              )
+            ) + 5,
+        })
+      );
+
+    // ----------------------------------------------------------
+    // CREATE WORKBOOK
+    // ----------------------------------------------------------
+
+    const workbook =
+      XLSX.utils.book_new();
 
     XLSX.utils.book_append_sheet(
       workbook,
       worksheet,
-      "Selected Cases"
+      sheetName
     );
 
-    const excelBuffer = XLSX.write(workbook, {
-      bookType: "xlsx",
-      type: "array",
-    });
+    // ----------------------------------------------------------
+    // GENERATE EXCEL FILE
+    // ----------------------------------------------------------
+
+    const excelBuffer =
+      XLSX.write(workbook, {
+        bookType: "xlsx",
+        type: "array",
+      });
+
+    // ----------------------------------------------------------
+    // DOWNLOAD
+    // ----------------------------------------------------------
 
     saveAs(
       new Blob([excelBuffer], {
         type:
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
       }),
-      `KNK_Selected_Cases_${new Date()
+      `KNK_${sheetName.replace(
+        /\s+/g,
+        "_"
+      )}_${new Date()
         .toISOString()
-        .slice(0, 100)}.xlsx`
+        .slice(0, 10)}.xlsx`
     );
+
+    // ----------------------------------------------------------
+    // SUCCESS
+    // ----------------------------------------------------------
 
     toast.success(
       `${selected.length} case(s) exported successfully.`
     );
 
   } catch (err) {
-    console.error(err);
+    console.error(
+      "EXPORT SELECTED CASES ERROR:",
+      err
+    );
 
     toast.error(
       err.response?.data?.message ||
-      "Failed to export selected cases."
+        "Failed to export selected cases."
     );
   }
 };
@@ -429,6 +622,10 @@ const handleBulkStatusUpdate = async () => {
     );
   }
 };
+
+const handleBack = () => {
+  navigate("/dashboard");
+};
  
 
   return (
@@ -450,72 +647,96 @@ const handleBulkStatusUpdate = async () => {
         </div>
 
 
-        {/* SEARCH */}
+       {/* SEARCH */}
+<div className="bg-white rounded-xl border border-slate-100 p-4">
 
-        <div className="bg-white rounded-xl border border-slate-100 p-4">
+  <div className="flex items-center gap-3">
 
-          <div className="flex gap-3">
+    {/* BACK BUTTON */}
+    <button
+      onClick={() => navigate("/dashboard")}
+      className="
+        border
+        border-slate-200
+        px-4
+        py-2.5
+        rounded-lg
+        flex
+        items-center
+        gap-1
+        text-sm
+        text-slate-600
+        hover:bg-slate-50
+        transition
+        whitespace-nowrap
+      "
+    >
+      <MdChevronLeft />
+      Back
+    </button>
 
-            <div className="relative flex-1">
+    {/* SEARCH INPUT */}
+    <div className="relative flex-1">
 
-              <MdSearch
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
+      <MdSearch
+        className="
+          absolute
+          left-3
+          top-1/2
+          -translate-y-1/2
+          text-slate-400
+        "
+      />
 
-              <input
-                value={search}
+      <input
+        value={search}
+        onChange={(e) => {
+          setSearch(e.target.value);
+          setPage(1);
+        }}
+        placeholder="Search name / application ID..."
+        className="
+          w-full
+          pl-9
+          pr-4
+          py-2.5
+          border
+          border-slate-200
+          rounded-lg
+          text-sm
+          focus:outline-none
+          focus:ring-2
+          focus:ring-blue-500
+        "
+      />
 
-                onChange={(e)=>{
+    </div>
 
-                  setSearch(
-                    e.target.value
-                  );
+    {/* CLEAR BUTTON */}
+    <button
+      onClick={handleClear}
+      className="
+        border
+        border-slate-200
+        px-4
+        py-2.5
+        rounded-lg
+        flex
+        items-center
+        gap-1
+        text-sm
+        whitespace-nowrap
+        hover:bg-slate-50
+        transition
+      "
+    >
+      <MdClear />
+      Clear
+    </button>
 
-                  setPage(1);
+  </div>
 
-                }}
-
-                placeholder="Search name / application ID..."
-
-                className="
-                w-full
-                pl-9
-                pr-4
-                py-2.5
-                border
-                rounded-lg
-                text-sm
-                focus:ring-2
-                focus:!important ring-blue-500
-                "
-              />
-
-            </div>
-
-
-            <button
-
-              onClick={handleClear}
-
-              className="
-              border
-              px-4
-              rounded-lg
-              flex
-              items-center
-              gap-1
-              "
-
-            >
-
-              <MdClear/>
-
-              Clear
-
-            </button>
-
-          </div>
-
-        </div>
+</div>
         
         <div className="flex items-center gap-3 mt-4">
 
@@ -539,21 +760,28 @@ const handleBulkStatusUpdate = async () => {
   {selectedCount > 0 && (
     <>
       <button
-        onClick={exportSelectedCases}
-        className="
-          bg-sky-100
-          border border-sky-300
-          text-sky-700
-          px-5
-          py-2.5
-          rounded-lg
-          font-medium
-          hover:bg-sky-200
-          transition
-        "
-      >
-        Export Excel ({selectedCount})
-      </button>
+  onClick={() => exportSelectedCases(
+    status || "NEW",
+    status === "IN_PROGRESS"
+      ? "WIP Cases"
+      : status === "COMPLETED"
+      ? "Completed Cases"
+      : "New Cases"
+  )}
+  className="
+    bg-sky-100
+    border border-sky-300
+    text-sky-700
+    px-5
+    py-2.5
+    rounded-lg
+    font-medium
+    hover:bg-sky-200
+    transition
+  "
+>
+  Export Excel ({selectedCount})
+</button>
 
       <button
         onClick={handleBulkStatusUpdate}
@@ -617,12 +845,8 @@ const handleBulkStatusUpdate = async () => {
 
           <input
             type="checkbox"
-          checked={
-              selectedCases.length > 0 &&
-              selectedCases.length ===
-                cases.filter((c) => c.check_status === "NEW").slice(0, 100).length
-            }
-            onChange={handleSelectAll}
+            checked={areAllCasesSelected(status)}
+            onChange={() => handleSelectAll(status)}
             className="w-4 h-4 cursor-pointer"
           />
 
@@ -682,7 +906,7 @@ const handleBulkStatusUpdate = async () => {
       className="w-4 h-4 cursor-pointer"
       disabled={
         !selectedCases.includes(c.comp_ref_no) &&
-        selectedCases.length >= 10
+        selectedCases.length >= 100
       }
     />
   </td>
