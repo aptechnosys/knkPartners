@@ -26,6 +26,7 @@ const {
   saveVerification,
   uploadProofDocument,
   archiveCase,
+  bulkArchiveCases,
   getArchivedCases,
   restoreCase,
   bulkDeleteCases,
@@ -56,6 +57,7 @@ router.get(
   protect,
   getAllCases
 );
+
 
 // GET ARCHIVED CASES
 router.get(
@@ -117,14 +119,6 @@ router.put(
   updateCaseStatus
 );
 
-// bulk status update
-// router.put(
-//   "/cases/bulk-status",
-//   protect,
-//   validateStatus,
-//   bulkUpdateStatus
-// );
-
 // ASSIGN CASE
 router.patch(
   "/cases/:id/assign",
@@ -173,6 +167,14 @@ router.patch(
   protect,
   adminOnly,
   archiveCase
+);
+
+// BULK ARCHIVE COMPLETED CASES
+router.patch(
+  "/cases/bulk-archive",
+  protect,
+  adminOnly,
+  bulkArchiveCases
 );
 
 

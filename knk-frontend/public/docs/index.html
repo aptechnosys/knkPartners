@@ -839,7 +839,7 @@ console.log(response.data); // { success: true, data: { ... } }</pre>
       <button class="tab-btn" onclick="switchTab(this,'lc-axios')">Axios</button>
     </div>
     <div id="lc-curl" class="tab-pane active">
-      <pre>curl "https://api.example.com/api/v1/cases?page=1&limit=10&status=IN_PROGRESS&sort=-createdAt" \
+      <pre>curl "https://api.example.com/api/v1/cases?page=1&limit=100&status=IN_PROGRESS&sort=-createdAt" \
   -H "Authorization: Bearer YOUR_JWT_TOKEN"
 
 # Search example
@@ -856,7 +856,7 @@ curl "https://api.example.com/api/v1/cases?overdue=true" \
   {
     params: {
       page: 1,
-      limit: 10,
+      limit: 100,
       status: 'IN_PROGRESS',
       sort: '-createdAt',
       search: 'Ananya'

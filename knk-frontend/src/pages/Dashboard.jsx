@@ -206,7 +206,7 @@ const notificationCount =
           onClick={() => navigate("/cases?status=IN_PROGRESS")}
         />
 
-        <StatCard
+        {/* <StatCard
           label="OVERDUE"
           value={
             recentCases.filter((c) => {
@@ -227,7 +227,7 @@ const notificationCount =
           icon={MdWarning}
           iconBg="bg-red-50 text-red-500"
           onClick={() => navigate("/cases?overdue=true")}
-        />
+        /> */}
 
       </div>
 

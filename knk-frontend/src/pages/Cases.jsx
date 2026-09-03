@@ -41,6 +41,8 @@ export default function Cases() {
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
   const [selectedCases, setSelectedCases] = useState([]);
+  const [selectedArchiveIds, setSelectedArchiveIds] = useState([]);
+  const archiveSelectedCount = selectedArchiveIds.length;
 
   const selectedCount = selectedCases.length;
 
@@ -370,6 +372,94 @@ const areAllCasesSelected = (status) => {
 
 
 // ============================================================
+// COMPLETED CASE SELECTION FOR BULK ARCHIVE
+// Uses MongoDB _id because comp_ref_no can be duplicated.
+// No 100-case limit for bulk archive.
+// ============================================================
+
+const toggleCompletedSelection = (caseId) => {
+  setSelectedArchiveIds((prev) =>
+    prev.includes(caseId)
+      ? prev.filter((id) => id !== caseId)
+      : [...prev, caseId]
+  );
+};
+
+const handleSelectAllCompleted = () => {
+  const completedIds = cases
+    .filter((c) => c.check_status === "COMPLETED")
+    .map((c) => c._id);
+
+  if (!completedIds.length) {
+    toast.error("No Completed cases found.");
+    return;
+  }
+
+  const allSelected = completedIds.every((id) =>
+    selectedArchiveIds.includes(id)
+  );
+
+  setSelectedArchiveIds((prev) =>
+    allSelected
+      ? prev.filter((id) => !completedIds.includes(id))
+      : [...new Set([...prev, ...completedIds])]
+  );
+};
+
+const areAllCompletedSelected = () => {
+  const completedIds = cases
+    .filter((c) => c.check_status === "COMPLETED")
+    .map((c) => c._id);
+
+  return (
+    completedIds.length > 0 &&
+    completedIds.every((id) => selectedArchiveIds.includes(id))
+  );
+};
+
+const handleBulkArchive = async () => {
+  if (!selectedArchiveIds.length) {
+    toast.error("Please select at least one Completed case.");
+    return;
+  }
+
+  if (
+    !window.confirm(
+      `Archive ${selectedArchiveIds.length} completed case(s)?`
+    )
+  ) {
+    return;
+  }
+
+  try {
+    const res = await API.patch("/cases/bulk-archive", {
+      caseIds: selectedArchiveIds,
+    });
+
+    const summary = res.data?.summary || {};
+    const archived = summary.archived ?? selectedArchiveIds.length;
+    const skipped = summary.skipped ?? 0;
+
+    if (archived > 0) {
+      toast.success(`${archived} case(s) archived successfully.`);
+    }
+
+    if (skipped > 0) {
+      toast.info(`${skipped} case(s) were skipped.`);
+    }
+
+    setSelectedArchiveIds([]);
+    await fetchCases();
+  } catch (err) {
+    console.error("BULK ARCHIVE ERROR:", err);
+    toast.error(
+      err.response?.data?.message ||
+        "Failed to archive selected cases."
+    );
+  }
+};
+
+// ============================================================
 // EXPORT SELECTED CASES TO EXCEL
 //
 // status:
@@ -392,7 +482,10 @@ const exportSelectedCases = async (
     // CHECK SELECTION
     // ----------------------------------------------------------
 
-    if (!selectedCases.length) {
+    const selectionIds =
+      status === "COMPLETED" ? selectedArchiveIds : selectedCases;
+
+    if (!selectionIds.length) {
       toast.error("Please select at least one case.");
       return;
     }
@@ -401,7 +494,7 @@ const exportSelectedCases = async (
     // MAXIMUM 100 CASES
     // ----------------------------------------------------------
 
-    if (selectedCases.length > 100) {
+    if (status !== "COMPLETED" && selectionIds.length > 100) {
       toast.error(
         "Maximum 100 cases can be exported."
       );
@@ -422,9 +515,10 @@ const exportSelectedCases = async (
     // FIND SELECTED CASES
     // ----------------------------------------------------------
 
-    const selected = cases.filter((item) =>
-      selectedCases.includes(item.comp_ref_no)
-    );
+    const selected =
+      status === "COMPLETED"
+        ? cases.filter((item) => selectionIds.includes(item._id))
+        : cases.filter((item) => selectionIds.includes(item.comp_ref_no));
 
     if (!selected.length) {
       toast.error(
@@ -757,63 +851,64 @@ const handleBack = () => {
     Bulk Upload
   </button>
 
-  {selectedCount > 0 && (
+  {status === "COMPLETED" && archiveSelectedCount > 0 ? (
     <>
       <button
-  onClick={() => exportSelectedCases(
-    status || "NEW",
-    status === "IN_PROGRESS"
-      ? "WIP Cases"
-      : status === "COMPLETED"
-      ? "Completed Cases"
-      : "New Cases"
-  )}
-  className="
-    bg-sky-100
-    border border-sky-300
-    text-sky-700
-    px-5
-    py-2.5
-    rounded-lg
-    font-medium
-    hover:bg-sky-200
-    transition
-  "
->
-  Export Excel ({selectedCount})
-</button>
+        onClick={() => exportSelectedCases("COMPLETED", "Completed Cases")}
+        className="bg-sky-100 border border-sky-300 text-sky-700 px-5 py-2.5 rounded-lg font-medium hover:bg-sky-200 transition"
+      >
+        Export Excel ({archiveSelectedCount})
+      </button>
+
+      <button
+        onClick={handleBulkArchive}
+        className="bg-red-100 border border-red-300 text-red-700 px-5 py-2.5 rounded-lg font-medium hover:bg-red-200 transition"
+      >
+        Archive Selected ({archiveSelectedCount})
+      </button>
+
+      <button
+        onClick={() => {
+          setSelectedCases([]);
+          setSelectedArchiveIds([]);
+        }}
+        className="border px-5 py-2.5 rounded-lg hover:bg-slate-50"
+      >
+        Clear Selection
+      </button>
+    </>
+  ) : status !== "COMPLETED" && selectedCount > 0 ? (
+    <>
+      <button
+        onClick={() =>
+          exportSelectedCases(
+            status || "NEW",
+            status === "IN_PROGRESS" ? "WIP Cases" : "New Cases"
+          )
+        }
+        className="bg-sky-100 border border-sky-300 text-sky-700 px-5 py-2.5 rounded-lg font-medium hover:bg-sky-200 transition"
+      >
+        Export Excel ({selectedCount})
+      </button>
 
       <button
         onClick={handleBulkStatusUpdate}
-        className="
-          bg-amber-100
-          border border-amber-300
-          text-amber-700
-          px-5
-          py-2.5
-          rounded-lg
-          font-medium
-          hover:bg-amber-200
-          transition
-        "
+        className="bg-amber-100 border border-amber-300 text-amber-700 px-5 py-2.5 rounded-lg font-medium hover:bg-amber-200 transition"
       >
         Mark as WIP ({selectedCount})
       </button>
 
       <button
-        onClick={() => setSelectedCases([])}
-        className="
-          border
-          px-5
-          py-2.5
-          rounded-lg
-          hover:bg-slate-50
-        "
+        onClick={() => {
+          setSelectedCases([]);
+          setSelectedArchiveIds([]);
+        }}
+        className="border px-5 py-2.5 rounded-lg hover:bg-slate-50"
       >
         Clear Selection
       </button>
     </>
-  )}
+  ) : null}
 
 </div>
 
@@ -845,8 +940,16 @@ const handleBack = () => {
 
           <input
             type="checkbox"
-            checked={areAllCasesSelected(status)}
-            onChange={() => handleSelectAll(status)}
+            checked={
+              status === "COMPLETED"
+                ? areAllCompletedSelected()
+                : areAllCasesSelected(status)
+            }
+            onChange={() =>
+              status === "COMPLETED"
+                ? handleSelectAllCompleted()
+                : handleSelectAll(status)
+            }
             className="w-4 h-4 cursor-pointer"
           />
 
@@ -901,10 +1004,19 @@ const handleBack = () => {
   <td className="w-12 px-4 py-5 text-center">
     <input
       type="checkbox"
-      checked={selectedCases.includes(c.comp_ref_no)}
-      onChange={() => toggleCaseSelection(c.comp_ref_no)}
+      checked={
+        c.check_status === "COMPLETED"
+          ? selectedArchiveIds.includes(c._id)
+          : selectedCases.includes(c.comp_ref_no)
+      }
+      onChange={() =>
+        c.check_status === "COMPLETED"
+          ? toggleCompletedSelection(c._id)
+          : toggleCaseSelection(c.comp_ref_no)
+      }
       className="w-4 h-4 cursor-pointer"
       disabled={
+        c.check_status !== "COMPLETED" &&
         !selectedCases.includes(c.comp_ref_no) &&
         selectedCases.length >= 100
       }

@@ -24,6 +24,11 @@ import {
 import * as XLSX from "xlsx";
 import { saveAs } from "file-saver";
 
+
+// ============================================================
+// REPORT CARD
+// ============================================================
+
 function ReportCard({
   title,
   value,
@@ -51,10 +56,21 @@ function ReportCard({
   );
 }
 
+
+// ============================================================
+// REPORTS
+// ============================================================
+
 export default function Reports() {
   const [stats, setStats] = useState(null);
 
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] =
+    useState(true);
+
+
+  // ==========================================================
+  // FETCH REPORT DATA
+  // ==========================================================
 
   useEffect(() => {
     const fetchReports = async () => {
@@ -63,9 +79,16 @@ export default function Reports() {
           "/reports/summary"
         );
 
-        setStats(res.data.data);
+        setStats(
+          res.data.data
+        );
+
       } catch (err) {
-        console.log(err);
+        console.error(
+          "Failed to fetch reports:",
+          err
+        );
+
       } finally {
         setLoading(false);
       }
@@ -74,94 +97,302 @@ export default function Reports() {
     fetchReports();
   }, []);
 
-  // ===============================
+
+  // ==========================================================
   // EXPORT EXCEL
-  // ===============================
+  // ==========================================================
 
   const handleExportExcel = async () => {
     try {
+
+      // --------------------------------------------------------
+      // Get cases
+      // --------------------------------------------------------
+
       const res = await API.get(
         "/cases?page=1&limit=1000"
       );
 
-      const cases = res.data.data || [];
+      const cases =
+        res.data.data || [];
+
 
       if (!cases.length) {
-        console.log("No cases available for export.");
+        alert(
+          "No cases available for export."
+        );
         return;
       }
 
-      const exportData = cases.map((item) => ({
-        "Reference No":
-          item.comp_ref_no || "-",
 
-        Candidate:
-          item.candidate_name || "-",
+      // --------------------------------------------------------
+      // Create export data
+      // --------------------------------------------------------
 
-        "Father Name":
-          item.father_name || "-",
+      const exportData =
+        cases.map((item) => {
 
-        DOB: item.candidate_dob
-          ? new Date(
-              item.candidate_dob
-            ).toLocaleDateString()
-          : "-",
+          const tatDays =
+            Number(item.tat);
 
-        City:
-          item.city || "-",
 
-        State:
-          item.state || "-",
+          let tatStatus =
+            "-";
 
-        Vendor:
-          item.vendor || "-",
 
-        Status:
-          item.check_status || "-",
+          // ====================================================
+          // CALCULATE TAT STATUS
+          // ====================================================
 
-        "Assigned To":
-          item.assignedTo?.email ||
-          "Unassigned",
+          if (
+            item.createdAt &&
+            tatDays > 0
+          ) {
 
-        TAT:
-          item.tat || "-",
-
-        Remark:
-          item.remark || "-",
-
-        "Created At":
-          item.createdAt
-            ? new Date(
+            const deadline =
+              new Date(
                 item.createdAt
-              ).toLocaleString()
-            : "-",
-      }));
+              ).getTime() +
+              tatDays *
+                24 *
+                60 *
+                60 *
+                1000;
+
+
+            // --------------------------------------------------
+            // COMPLETED CASE
+            // --------------------------------------------------
+
+            if (
+              String(
+                item.check_status || ""
+              ).toUpperCase() ===
+              "COMPLETED"
+            ) {
+
+              tatStatus =
+                "Completed";
+
+            }
+
+            // --------------------------------------------------
+            // OVERDUE CASE
+            // --------------------------------------------------
+
+            else if (
+              Date.now() >
+              deadline
+            ) {
+
+              const overdueDays =
+                Math.ceil(
+                  (
+                    Date.now() -
+                    deadline
+                  ) /
+                    (
+                      24 *
+                      60 *
+                      60 *
+                      1000
+                    )
+                );
+
+
+              tatStatus =
+                `Overdue by ${overdueDays} day${
+                  overdueDays !== 1
+                    ? "s"
+                    : ""
+                }`;
+
+            }
+
+            // --------------------------------------------------
+            // CASE STILL WITHIN TAT
+            // --------------------------------------------------
+
+            else {
+
+              const daysLeft =
+                Math.ceil(
+                  (
+                    deadline -
+                    Date.now()
+                  ) /
+                    (
+                      24 *
+                      60 *
+                      60 *
+                      1000
+                    )
+                );
+
+
+              tatStatus =
+                `${daysLeft} day${
+                  daysLeft !== 1
+                    ? "s"
+                    : ""
+                } left`;
+            }
+          }
+
+
+          // ====================================================
+          // RETURN EXCEL ROW
+          // ====================================================
+
+          return {
+
+            "Reference No":
+              item.comp_ref_no ||
+              "-",
+
+
+            Candidate:
+              item.candidate_name ||
+              "-",
+
+
+            "Father Name":
+              item.father_name ||
+              "-",
+
+
+            DOB:
+              item.candidate_dob
+                ? new Date(
+                    item.candidate_dob
+                  ).toLocaleDateString(
+                    "en-GB"
+                  )
+                : "-",
+
+
+            Address:
+              item.address ||
+              "-",
+
+
+            City:
+              item.city ||
+              "-",
+
+
+            State:
+              item.state ||
+              "-",
+
+
+            "Pin Code":
+              item.pincode ||
+              "-",
+
+
+            Vendor:
+              item.vendor ||
+              "-",
+
+
+            Status:
+              item.check_status ||
+              "-",
+
+
+            "Assigned To":
+              item.assignedTo?.email ||
+              "Unassigned",
+
+
+            TAT:
+              item.tat ||
+              "-",
+
+
+            "TAT Status":
+              tatStatus,
+
+
+            "Verification Result":
+              item.verification_result ||
+              "-",
+
+
+            "Verification Remark":
+              item.verification_remark ||
+              "-",
+
+
+            "Verified Date":
+              item.verified_date
+                ? new Date(
+                    item.verified_date
+                  ).toLocaleString()
+                : "-",
+
+
+            Remark:
+              item.remark ||
+              "-",
+
+
+            "Created At":
+              item.createdAt
+                ? new Date(
+                    item.createdAt
+                  ).toLocaleString()
+                : "-",
+          };
+        });
+
+
+      // ========================================================
+      // CREATE WORKSHEET
+      // ========================================================
 
       const worksheet =
         XLSX.utils.json_to_sheet(
           exportData
         );
 
-      // Column widths
-      const colWidths = Object.keys(
-        exportData[0]
-      ).map((key) => ({
-        wch:
-          Math.max(
-            key.length,
-            ...exportData.map((row) =>
-              String(
-                row[key] || ""
-              ).length
-            )
-          ) + 5,
-      }));
+
+      // ========================================================
+      // COLUMN WIDTHS
+      // ========================================================
+
+      const colWidths =
+        Object.keys(
+          exportData[0]
+        ).map((key) => ({
+
+          wch:
+            Math.max(
+              key.length,
+
+              ...exportData.map(
+                (row) =>
+                  String(
+                    row[key] || ""
+                  ).length
+              )
+            ) + 5,
+
+        }));
+
 
       worksheet["!cols"] =
         colWidths;
 
+
+      // ========================================================
+      // CREATE WORKBOOK
+      // ========================================================
+
       const workbook =
         XLSX.utils.book_new();
+
 
       XLSX.utils.book_append_sheet(
         workbook,
@@ -169,36 +400,67 @@ export default function Reports() {
         "Cases Report"
       );
 
-      const excelBuffer =
-        XLSX.write(workbook, {
-          bookType: "xlsx",
-          type: "array",
-        });
 
-      const fileData = new Blob(
-        [excelBuffer],
-        {
-          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
-        }
-      );
+      // ========================================================
+      // WRITE EXCEL
+      // ========================================================
+
+      const excelBuffer =
+        XLSX.write(
+          workbook,
+          {
+            bookType: "xlsx",
+            type: "array",
+          }
+        );
+
+
+      // ========================================================
+      // CREATE FILE
+      // ========================================================
+
+      const fileData =
+        new Blob(
+          [excelBuffer],
+          {
+            type:
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet;charset=UTF-8",
+          }
+        );
+
+
+      // ========================================================
+      // DOWNLOAD
+      // ========================================================
 
       saveAs(
         fileData,
-        `KNK_Report_${Date.now()}.xlsx`
+        `KNK_Report_${new Date()
+          .toISOString()
+          .slice(0, 10)}.xlsx`
       );
+
     } catch (err) {
-      console.log(
+
+      console.error(
         "Excel export error:",
         err
+      );
+
+      alert(
+        err.response?.data?.message ||
+        "Failed to export report."
       );
     }
   };
 
-  // ===============================
+
+  // ==========================================================
   // LOADING
-  // ===============================
+  // ==========================================================
 
   if (loading) {
+
     return (
       <DashboardLayout
         title="Reports"
@@ -212,49 +474,56 @@ export default function Reports() {
     );
   }
 
-  // ===============================
+
+  // ==========================================================
   // CHART DATA
-  // ===============================
+  //
+  // IMPORTANT:
+  // Overdue is NOT included here because it is not a
+  // separate status. An overdue case can still be NEW
+  // or IN PROGRESS.
+  // ==========================================================
 
   const chartData = [
+
     {
       name: "New",
+
       value:
         Number(
           stats?.newCases
         ) || 0,
     },
 
+
     {
       name: "In Progress",
+
       value:
         Number(
           stats?.inProgressCases
         ) || 0,
     },
 
+
     {
       name: "Completed",
+
       value:
         Number(
           stats?.completedCases
         ) || 0,
     },
 
-    {
-      name: "Overdue",
-      value:
-        Number(
-          stats?.overdueCases
-        ) || 0,
-    },
   ];
 
-  // ===============================
+
+  // ==========================================================
   // UI
-  // ===============================
+  // ==========================================================
 
   return (
+
     <DashboardLayout
       title="Reports"
       breadcrumbs={[
@@ -262,32 +531,45 @@ export default function Reports() {
         "Reports",
       ]}
     >
-      {/* =========================
-          REPORT CARDS
-      ========================== */}
 
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* =====================================================
+          REPORT CARDS
+      ====================================================== */}
+
+      <div
+        className="
+          grid
+          grid-cols-2
+          lg:grid-cols-3
+          gap-4
+        "
+      >
+
         {/* TOTAL */}
 
         <ReportCard
           title="Total Cases"
           value={
-            stats?.totalCases || 0
+            stats?.totalCases ||
+            0
           }
           icon={MdFolder}
           iconBg="bg-blue-50 text-blue-600"
         />
+
 
         {/* NEW */}
 
         <ReportCard
           title="New Cases"
           value={
-            stats?.newCases || 0
+            stats?.newCases ||
+            0
           }
           icon={MdInbox}
           iconBg="bg-slate-100 text-slate-600"
         />
+
 
         {/* IN PROGRESS */}
 
@@ -301,6 +583,7 @@ export default function Reports() {
           iconBg="bg-indigo-50 text-indigo-600"
         />
 
+
         {/* COMPLETED */}
 
         <ReportCard
@@ -313,45 +596,98 @@ export default function Reports() {
           iconBg="bg-green-50 text-green-600"
         />
 
+
         {/* OVERDUE */}
 
         <ReportCard
           title="Overdue"
           value={
-            stats?.overdueCases || 0
+            stats?.overdueCases ||
+            0
           }
           icon={MdWarning}
           iconBg="bg-red-50 text-red-600"
         />
+
       </div>
 
-      {/* =========================
-          EXPORT BUTTON
-      ========================== */}
 
-      <div className="mt-6 flex justify-end">
+      {/* =====================================================
+          EXPORT BUTTON
+      ====================================================== */}
+
+      <div
+        className="
+          mt-6
+          flex
+          justify-end
+        "
+      >
+
         <button
           onClick={
             handleExportExcel
           }
-          className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-sm transition"
+          className="
+            flex
+            items-center
+            gap-2
+            bg-green-600
+            hover:bg-green-700
+            text-white
+            px-4
+            py-2
+            rounded-lg
+            shadow-sm
+            transition
+          "
         >
+
           <MdDownload />
 
           Export Excel
+
         </button>
+
       </div>
 
-      {/* =========================
-          BAR CHART
-      ========================== */}
 
-      <div className="mt-6 bg-white rounded-xl border border-slate-100 p-6 shadow-sm">
-        <h2 className="text-lg font-semibold text-slate-800 mb-6">
+      {/* =====================================================
+          CASE DISTRIBUTION
+      ====================================================== */}
+
+      <div
+        className="
+          mt-6
+          bg-white
+          rounded-xl
+          border
+          border-slate-100
+          p-6
+          shadow-sm
+        "
+      >
+
+        <h2
+          className="
+            text-lg
+            font-semibold
+            text-slate-800
+            mb-6
+          "
+        >
           Case Distribution
         </h2>
 
-        <div className="overflow-x-auto flex justify-center">
+
+        <div
+          className="
+            overflow-x-auto
+            flex
+            justify-center
+          "
+        >
+
           <BarChart
             width={850}
             height={350}
@@ -363,17 +699,22 @@ export default function Reports() {
               bottom: 5,
             }}
           >
+
             <CartesianGrid
               strokeDasharray="3 3"
             />
+
 
             <XAxis
               dataKey="name"
             />
 
+
             <YAxis />
 
+
             <Tooltip />
+
 
             <Bar
               dataKey="value"
@@ -385,9 +726,13 @@ export default function Reports() {
                 0,
               ]}
             />
+
           </BarChart>
+
         </div>
+
       </div>
+
     </DashboardLayout>
   );
 }
