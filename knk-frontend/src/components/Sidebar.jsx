@@ -193,14 +193,22 @@ const filteredNAV = NAV.map(group => ({
       {/* Logo */}
       <div className="px-5 py-5 border-b border-slate-100">
         <div className="flex items-center gap-3">
-          <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center shrink-0">
-            <MdSecurity className="text-white text-lg" />
+        <img
+          src="/knk-logo.png"
+          alt="KNK Partners"
+          className="w-12 h-12 object-contain shrink-0"
+        />
+
+        <div>
+          <div className="font-bold text-slate-900 text-sm leading-tight">
+            KNK PARTNERS
           </div>
-          <div>
-            <div className="font-bold text-slate-900 text-sm leading-tight">KNK PARTNERS</div>
-            <div className="text-[10px] text-slate-400">Court Case Panel</div>
+
+          <div className="text-[10px] text-slate-400">
+            Court Case Panel
           </div>
         </div>
+      </div>
       </div>
 
       {/* Nav */}

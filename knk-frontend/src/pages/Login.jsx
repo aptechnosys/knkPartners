@@ -94,16 +94,26 @@ function Login() {
       <div className="relative w-full max-w-md">
         {/* Card */}
         <div className="bg-white rounded-2xl shadow-2xl overflow-hidden">
-          {/* Header band */}
-          <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-8 text-center">
-            <div className="flex justify-center mb-3">
-              <div className="w-14 h-14 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-sm">
-                <MdSecurity className="text-white text-3xl" />
-              </div>
+         {/* Header band */}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-8 py-8 text-center">
+          <div className="flex justify-center mb-3">
+            <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-lg">
+              <img
+                src="/knk-logo.png"
+                alt="KNK Partners"
+                className="w-16 h-16 object-contain"
+              />
             </div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">KNK Admin Panel</h1>
-            <p className="text-blue-200 text-sm mt-1">Criminal Court Verification System</p>
           </div>
+
+          <h1 className="text-2xl font-bold text-white tracking-tight">
+            KNK Admin Panel
+          </h1>
+
+          <p className="text-blue-200 text-sm mt-1">
+            Criminal Court Verification System
+          </p>
+        </div>
 
           {/* Form */}
           <div className="px-8 py-8">
