@@ -405,102 +405,96 @@ exports.getDashboardStats = async (req, res, next) => {
   }
 };
 
-//Get Single Case
-
+// Get Single Case
 exports.getSingleCase = async (req, res, next) => {
-
   try {
+    const filter = {
+      _id: req.params.id,
+    };
 
-    const singleCase =
-  await Case.findById(
-    req.params.id
-  )
-    .populate(
-      "assignedTo",
-      "email role"
-    )
-    .populate(
-      "user",
-      "email role"
-    )
-    .populate(
-      "verified_by",
-      "email role"
-    );
+    // Admin can access any case.
+    // Agents can access only cases assigned to them.
+    if (req.user.role !== "admin") {
+      filter.assignedTo = req.user._id;
+    }
 
-    
+    const singleCase = await Case.findOne(filter)
+      .populate("assignedTo", "email role")
+      .populate("user", "email role")
+      .populate("verified_by", "email role");
 
     if (!singleCase) {
-
-      const error = new Error("Case not found");
+      const error = new Error(
+        "Case not found or you are not authorized to access it"
+      );
 
       error.statusCode = 404;
 
       return next(error);
-
     }
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
       data: singleCase,
     });
-
   } catch (error) {
-
     next(error);
-
   }
-
 };
 
 // UPDATE CASE STATUS
-exports.updateCaseStatus = async (
-  req,
-  res,
-  next
-) => {
+exports.updateCaseStatus = async (req, res, next) => {
   try {
+    const { check_status } = req.body;
 
-   
+    // Build case filter
+    const filter = {
+      _id: req.params.id,
+    };
 
-    const { check_status } =
-      req.body;
+    // Agents can update only cases assigned to themselves
+    // Admins can update any case
+    if (req.user.role !== "admin") {
+      filter.assignedTo = req.user._id;
+    }
 
-    const updatedCase =
-      await Case.findByIdAndUpdate(
-        req.params.id,
-        { check_status },
-        { new: true }
-      );
+    const updatedCase = await Case.findOneAndUpdate(
+      filter,
+      { $set: { check_status } },
+      {
+        new: true,
+        runValidators: true,
+      }
+    );
 
     if (!updatedCase) {
       return res.status(404).json({
         success: false,
-        message: "Case not found",
+        message: "Case not found or not assigned to you",
       });
     }
 
+    // Send webhook after successful status update
     await sendWebhook(updatedCase);
 
+    // Create audit log
     await createAuditLog({
       userId: req.user.id,
       action: "STATUS_UPDATED",
       caseId: updatedCase._id,
-      details:
-        `Status changed to ${check_status}`,
+      details: `Status changed to ${check_status}`,
       module: "CASE",
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       success: true,
+      message: "Case status updated successfully",
       data: updatedCase,
     });
-
   } catch (error) {
     next(error);
   }
 };
-
 
 // RAISE INSUFFICIENT QUERY
 exports.raiseInsufficientQuery =
