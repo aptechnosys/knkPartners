@@ -12,7 +12,8 @@ const uploadAvatarMiddleware = require("../middlewares/uploadAvatar");
 
 
 
-router.post("/register", registerUser);
+router.post("/register",protect,
+  adminOnly, registerUser);
 // rate limiter
 router.post( "/login",authLimiter,loginUser);
 router.get("/users", protect, adminOnly, getAllUsers);
